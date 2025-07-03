@@ -73,7 +73,7 @@ class CuroboMotion:
         self.init_ee_pose = {}
         n_obstacle_mesh = 100
 
-        robot_cfg_path = get_robot_configs_path()
+        robot_cfg_path = "/root/workspace/main/server/source/genie.sim.lab/curobo/configs/robot" # get_robot_configs_path()
         self.robot_cfg = load_yaml(join_path(robot_cfg_path, robot_cfg))["robot_cfg"]
         self.robot_cfg["kinematics"]["extra_collision_spheres"] = {
             "attached_object": 30,
