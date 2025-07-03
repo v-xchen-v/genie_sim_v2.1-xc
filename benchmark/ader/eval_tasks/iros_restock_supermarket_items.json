@@ -115,7 +115,7 @@
     "num_of_episode": 6
   },
   "robot": {
-    "arm": "right",
+    "arm": "dual",
     "init_arm_pose": [
       0.35,
       0.449,
@@ -152,7 +152,7 @@
       null,
       null
     ],
-    "robot_cfg": "G1_omnipicker.json",
+    "robot_cfg": "G1_omnipicker_dual.json",
     "robot_id": "G1",
     "robot_init_pose": {
       "workspace_00": {
