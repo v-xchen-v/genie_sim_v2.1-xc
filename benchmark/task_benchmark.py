@@ -19,10 +19,13 @@ logger = Logger()  # Create singleton instance
 
 from benchmark.envs.demo_env import DemoEnv
 from benchmark.envs.dummy_env import DummyEnv
+from benchmark.envs.cogact_demo_env import CogActDemoEnv
 from robot.genie_robot import IsaacSimRpcRobot
 from policy.base import BasePolicy
 from benchmark.policy.demopolicy import DemoPolicy
 from benchmark.policy.baselinepolicy import BaselinePolicy
+from benchmark.policy.cogactpolicy import CogActPolicy
+
 import ader
 
 from layout.task_generate import TaskGenerator
@@ -162,6 +165,8 @@ class TaskBenchmark(object):
 
         if self.args.env_class == "DemoEnv":
             env = DemoEnv(robot, episode_file, self.task_config, self.policy)
+        elif self.args.env_class == "CogActDemoEnv":
+            env = CogActDemoEnv(robot, episode_file, self.task_config, self.policy)
         else:
             env = DummyEnv(robot, episode_file, self.task_config)
         init_pose = self.task_config["robot"].get("init_arm_pose")
@@ -320,15 +325,15 @@ def main():
     parser.add_argument(
         "--policy_class",
         type=str,
-        default="DemoPolicy",
-        choices=["DemoPolicy", "BaselinePolicy"],
+        default="CogActPolicy",
+        choices=["DemoPolicy", "BaselinePolicy", "CogActPolicy"],
         help="Choose the policy class",
     )
     parser.add_argument(
         "--env_class",
         type=str,
-        default="DummyEnv",
-        choices=["DemoEnv", "DummyEnv"],
+        default="CogActDemoEnv",
+        choices=["DemoEnv", "DummyEnv", "CogActDemoEnv"],
         help="Choose the task env",
     )
     parser.add_argument(
@@ -363,6 +368,8 @@ def main():
         policy = DemoPolicy(task_name=args.task_name)
     elif args.policy_class == "BaselinePolicy":
         policy = BaselinePolicy(task_name=args.task_name)
+    elif args.policy_class == "CogActPolicy":
+        policy = CogActPolicy(task_name=args.task_name)
     else:
         raise ValueError("Invalid policy class: {}".format(args.policy_class))
 
