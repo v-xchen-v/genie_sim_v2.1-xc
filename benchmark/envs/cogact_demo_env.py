@@ -219,5 +219,5 @@ class CogActDemoEnv(DemoEnv):
             self.reset()
 
         # return observaion, None, done, info
-        return self.has_done, need_update, self.task.task_progress
+        return observaion, self.has_done, need_update, self.task.task_progress
         
