@@ -522,7 +522,8 @@ class CogActPolicy(BasePolicy):
                 # also save the observations
                 obs_filename = os.path.join(log_dir, f"observations_{timestamp}.pkl")
                 with open(obs_filename, "wb") as f:
-                    pickle.dump(observations, f)
+                    # pickle.dump(observations, f)
+                    pickle.dump(obs_dict, f)
 
         # # dump action for debugging
         # import pickle
