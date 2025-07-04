@@ -193,168 +193,31 @@ class CogActDemoEnv(DemoEnv):
         self.current_step += 1
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
-        HARDCODE = False  # hardcode for now
-        if not HARDCODE:
-            execute_K = min(8, action_len)
-            execute_step_N=8
-            for execute_step_id in range(execute_K):
-                is_first_or_last = (execute_step_id == 0 or execute_step_id == execute_K - 1)
-                is_selected_step = (execute_step_id + 1) % execute_step_N == 0
-                if not is_first_or_last and not is_selected_step:
-                    continue
-                
-                self._robot_move(self._get_per_step_actons(actions, execute_step_id))
-
+        execute_K = min(8, action_len)
+        execute_step_N=8
+        for execute_step_id in range(execute_K):
+            is_first_or_last = (execute_step_id == 0 or execute_step_id == execute_K - 1)
+            is_selected_step = (execute_step_id + 1) % execute_step_N == 0
+            if not is_first_or_last and not is_selected_step:
+                continue
             
-            observaion = None
-            info = {}
-            done = False
-            # if self.current_step != 1 and self.current_step % 30 == 0:
-            observaion = self.get_observation()
-            done, info = self.task.get_termination(self, info)
-            self.task.step(self)
+            self._robot_move(self._get_per_step_actons(actions, execute_step_id))
 
-            if done:
-                info["final_step"] = self.current_step
-                self.reset()
+        
+        observaion = None
+        info = {}
+        done = False
+        # if self.current_step != 1 and self.current_step % 30 == 0:
+        observaion = self.get_observation()
+        # done, info = self.task.get_termination(self, info)
+        self.task.step(self)
+        need_update = True
+        self.action_update()
+        
+        if done:
+            info["final_step"] = self.current_step
+            self.reset()
 
-            return observaion, None, done, info
-        else:
-            self.current_step += 1
-            split_stages = split_grasp_stages(self.policy_stages)
-            stage_id = -1
-            substages = None
-            for _stages in split_stages:
-                extra_params = _stages[0].get("extra_params", {})
-                active_id, passive_id = (
-                    _stages[0]["active"]["object_id"],
-                    _stages[0]["passive"]["object_id"],
-                )
-                arm = extra_params.get("arm", "right")
-                action_stages = generate_action_stages(
-                    self.policy_objects, _stages, self.robot
-                )
-                if not len(action_stages):
-                    success = False
-                    logger.warning("No action stage generated.")
-                    break
-
-                # Execution
-                success = True
-
-                for action, substages in action_stages:
-                    stage_id += 1
-                    logger.info(">>>>  Stage [%d]  <<<<" % (stage_id + 1))
-                    if action in ["reset"]:
-                        init_pose = self.robot.reset_pose[arm]
-                        curr_pose = self.robot.get_ee_pose(ee_type="gripper", id=arm)
-                        interp_pose = init_pose.copy()
-                        interp_pose[:3, 3] = (
-                            curr_pose[:3, 3]
-                            + (init_pose[:3, 3] - curr_pose[:3, 3]) * 0.25
-                        )
-                        success = self.robot.move_pose(
-                            self.robot.reset_pose[arm],
-                            type="AvoidObs",
-                            arm=arm,
-                            block=True,
-                        )
-                        continue
-                    if action in ["grasp", "pick"]:
-                        obj_id = substages.passive_obj_id
-                        if obj_id.split("/")[0] not in self.articulated_objs:
-                            self.robot.target_object = substages.passive_obj_id
-
-                    while len(substages):
-                        # get next step actionddd
-                        self.policy_objects = self.update_objects(
-                            self.policy_objects, arm=arm
-                        )
-                        target_gripper_pose, motion_type, right_gripper_action, arm = (
-                            substages.get_action(self.policy_objects)
-                        )
-                        arm = extra_params.get("arm", "right")
-                        self.robot.client.set_frame_state(
-                            action,
-                            substages.step_id,
-                            active_id,
-                            passive_id,
-                            self.attached_obj_id is not None,
-                        )
-
-                        # execution action
-                        if target_gripper_pose is not None:
-                            self.robot.move_pose(
-                                target_gripper_pose, motion_type, arm=arm, block=True
-                            )
-
-                        self.robot.client.set_frame_state(
-                            action,
-                            substages.step_id,
-                            active_id,
-                            passive_id,
-                            self.attached_obj_id is not None,
-                        )
-                        self.robot.set_gripper_action(right_gripper_action, arm=arm)
-                        time.sleep(1)
-
-                        self.robot.client.set_frame_state(
-                            action,
-                            substages.step_id,
-                            active_id,
-                            passive_id,
-                            self.attached_obj_id is not None,
-                        )
-
-                        # check sub-stage completion
-                        self.policy_objects["gripper"].obj_pose = (
-                            self.robot.get_ee_pose(ee_type="gripper", id=arm)
-                        )
-                        self.policy_objects = self.update_objects(
-                            self.policy_objects, arm=arm
-                        )
-
-                        success = substages.check_completion(self.policy_objects)
-                        self.robot.client.set_frame_state(
-                            action,
-                            substages.step_id,
-                            active_id,
-                            passive_id,
-                            self.attached_obj_id is not None,
-                        )
-                        if success == False:
-                            logger.error("Failed at sub-stage %d" % substages.step_id)
-                            break
-
-                        # attach grasped object to gripper, avoid articulated objects
-                        if arm == "right":
-                            # make sure objects are graspped
-                            if right_gripper_action == "close":
-                                self.attached_obj_id = substages.passive_obj_id
-                            elif right_gripper_action == "open":
-                                self.attached_obj_id = None
-                        self.robot.client.set_frame_state(
-                            action,
-                            substages.step_id,
-                            active_id,
-                            passive_id,
-                            self.attached_obj_id is not None,
-                        )
-
-                    if success == False:
-                        break
-                if success == False:
-                    break
-
-            # self.robots.apply_action(action)
-            observaion = self.get_observation()
-            info = {}
-            # reward, info = self.task.get_reward(self, info)
-            done, info = self.task.get_termination(self, info)
-            self.task.step(self)
-
-            if done:
-                info["final_step"] = self.current_step
-                self.reset()
-
-            return observaion, None, done, info
+        # return observaion, None, done, info
+        return self.has_done, need_update, self.task.task_progress
+        
