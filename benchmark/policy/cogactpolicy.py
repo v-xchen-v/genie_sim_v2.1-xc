@@ -12,6 +12,7 @@ import io
 import json
 import os
 
+
 from base_utils.logger import Logger
 
 logger = Logger()  # Create singleton instance
@@ -64,67 +65,139 @@ def mat2xyzwxyz(mat):
     xyz = mat[0:3, 3]
     xyzwxyz = np.concatenate([xyz, quat])
     return xyzwxyz
-
+import rclpy
 
 class CogActPolicy(BasePolicy):
     def __init__(self, task_name=None) -> None:
         super().__init__(task_name)
 
-    def _obs_head_cam_rgb_image(self, observations):
-        head_cam_rgb_flat = observations["camera"][
-            "/G1/head_link2/Head_Camera"
-        ]["rgb_camera"]
-        head_cam_rgb_width = observations["camera"][
-            "/G1/head_link2/Head_Camera"
-        ]["camera_info"]["width"]
-        head_cam_rgb_height = observations["camera"][
-            "/G1/head_link2/Head_Camera"
-        ]["camera_info"]["height"]
-        # TODO: here is a only temp resolution modification, for submission to challenge host,
-        # we only allowed processed on original resolution image.
-        # Reshape to (480, 640, 4) → (height, width, channels)
-        head_cam_rgba_image = np.array(head_cam_rgb_flat).reshape(
-            (head_cam_rgb_height, head_cam_rgb_width, 4)
-        )
-        # Optional: remove alpha channel for RGB display
-        head_cam_rgb_image = head_cam_rgba_image[:, :, :3]
-        return head_cam_rgb_image.astype(np.uint8)
+        SIM_INIT_TIME = 10
+        # while rclpy.ok():
+        #     sim_time = self.get_sim_time(self.sim_ros_node)
+        #     if sim_time > SIM_INIT_TIME:
+        #         print("cur sim time", sim_time)
+        #         break
+        #     time.sleep(0.5)
+        time.sleep(SIM_INIT_TIME)
 
-    def _obs_left_wrist_cam_rgb_image(self, observations):
-        left_wrist_cam_rgb_flat = observations["camera"][
-            "/G1/gripper_l_base_link/Left_Camera"
-        ]["rgb_camera"]
-        left_wrist_cam_rgb_width = observations["camera"][
-            "/G1/gripper_l_base_link/Left_Camera"
-        ]["camera_info"]["width"]
-        left_wrist_cam_rgb_height = observations["camera"][
-            "/G1/gripper_l_base_link/Left_Camera"
-        ]["camera_info"]["height"]
-        # Reshape to (480, 640, 4) → (height, width, channels)
-        left_wrist_cam_rgba_image = np.array(left_wrist_cam_rgb_flat).reshape(
-            (left_wrist_cam_rgb_height, left_wrist_cam_rgb_width, 4)
-        )
-        # Optional: remove alpha channel for RGB display
-        left_wrist_cam_rgb_image = left_wrist_cam_rgba_image[:, :, :3]
-        return left_wrist_cam_rgb_image.astype(np.uint8)
+    def get_sim_time(self, sim_ros_node):
+        sim_time = sim_ros_node.get_clock().now().nanoseconds * 1e-9
+        return sim_time
+
+    # def _wait_for_img_head(self, timeout_sec=50.0):
+    #     start_time = time.time()
+    #     while self.sim_ros_node.get_img_head() is None:
+    #         if time.time() - start_time > timeout_sec:
+    #             return False
+    #         rclpy.spin_once(self.sim_ros_node, timeout_sec=0.5)
+    #         time.sleep(0.5)
+    #     return True
     
+    # def _wait_for_img_left_wrist(self, timeout_sec=50.0):
+    #     start_time = time.time()
+    #     while self.sim_ros_node.get_img_left_wrist() is None:
+    #         if time.time() - start_time > timeout_sec:
+    #             return False
+    #         rclpy.spin_once(self.sim_ros_node, timeout_sec=0.5)
+    #         time.sleep(0.5)
+    #     return True
+    
+    # def _wait_for_img_right_wrist(self, timeout_sec=50.0):
+    #     start_time = time.time()
+    #     while self.sim_ros_node.get_img_right_wrist() is None:
+    #         if time.time() - start_time > timeout_sec:
+    #             return False
+    #         rclpy.spin_once(self.sim_ros_node, timeout_sec=0.5)
+    #         time.sleep(0.5)
+    #     return True
+    
+    def _obs_head_cam_rgb_image(self, observations):
+        # head_cam_rgb_flat = observations["camera"][
+        #     "/G1/head_link2/Head_Camera"
+        # ]["rgb_camera"]
+        # head_cam_rgb_width = observations["camera"][
+        #     "/G1/head_link2/Head_Camera"
+        # ]["camera_info"]["width"]
+        # head_cam_rgb_height = observations["camera"][
+        #     "/G1/head_link2/Head_Camera"
+        # ]["camera_info"]["height"]
+        # # TODO: here is a only temp resolution modification, for submission to challenge host,
+        # # we only allowed processed on original resolution image.
+        # # Reshape to (480, 640, 4) → (height, width, channels)
+        # head_cam_rgba_image = np.array(head_cam_rgb_flat).reshape(
+        #     (head_cam_rgb_height, head_cam_rgb_width, 4)
+        # )
+        # # Optional: remove alpha channel for RGB display
+        # head_cam_rgb_image = head_cam_rgba_image[:, :, :3]
+        # return head_cam_rgb_image.astype(np.uint8)
+
+
+        # img_raw = None
+        # if self._wait_for_img_head():
+        while True:
+            img_raw = self.sim_ros_node.get_img_head()
+            time.sleep(0.1)
+            if img_raw is not None:
+                break
+
+        return img_raw.astype(np.uint8)
+        
+    def _obs_left_wrist_cam_rgb_image(self, observations):
+        # left_wrist_cam_rgb_flat = observations["camera"][
+        #     "/G1/gripper_l_base_link/Left_Camera"
+        # ]["rgb_camera"]
+        # left_wrist_cam_rgb_width = observations["camera"][
+        #     "/G1/gripper_l_base_link/Left_Camera"
+        # ]["camera_info"]["width"]
+        # left_wrist_cam_rgb_height = observations["camera"][
+        #     "/G1/gripper_l_base_link/Left_Camera"
+        # ]["camera_info"]["height"]
+        # # Reshape to (480, 640, 4) → (height, width, channels)
+        # left_wrist_cam_rgba_image = np.array(left_wrist_cam_rgb_flat).reshape(
+        #     (left_wrist_cam_rgb_height, left_wrist_cam_rgb_width, 4)
+        # )
+        # # Optional: remove alpha channel for RGB display
+        # left_wrist_cam_rgb_image = left_wrist_cam_rgba_image[:, :, :3]
+        # return left_wrist_cam_rgb_image.astype(np.uint8)
+
+        # img_raw = None
+        # if self._wait_for_img_left_wrist():
+        while True:
+            img_raw = self.sim_ros_node.get_img_left_wrist()
+            time.sleep(0.1)
+            if img_raw is not None:
+                break
+
+
+        return img_raw.astype(np.uint8)
+
     def _obs_right_wrist_cam_rgb_image(self, observations):
-        right_wrist_cam_rgb_flat = observations["camera"][
-            "/G1/gripper_r_base_link/Right_Camera"
-        ]["rgb_camera"]
-        right_wrist_cam_rgb_width = observations["camera"][
-            "/G1/gripper_r_base_link/Right_Camera"
-        ]["camera_info"]["width"]
-        right_wrist_cam_rgb_height = observations["camera"][
-            "/G1/gripper_r_base_link/Right_Camera"
-        ]["camera_info"]["height"]
-        # Reshape to (480, 640, 4) → (height, width, channels)
-        right_wrist_cam_rgba_image = np.array(right_wrist_cam_rgb_flat).reshape(
-            (right_wrist_cam_rgb_height, right_wrist_cam_rgb_width, 4)
-        )
-        # Optional: remove alpha channel for RGB display
-        right_wrist_cam_rgb_image = right_wrist_cam_rgba_image[:, :, :3]
-        return right_wrist_cam_rgb_image.astype(np.uint8)
+        # right_wrist_cam_rgb_flat = observations["camera"][
+        #     "/G1/gripper_r_base_link/Right_Camera"
+        # ]["rgb_camera"]
+        # right_wrist_cam_rgb_width = observations["camera"][
+        #     "/G1/gripper_r_base_link/Right_Camera"
+        # ]["camera_info"]["width"]
+        # right_wrist_cam_rgb_height = observations["camera"][
+        #     "/G1/gripper_r_base_link/Right_Camera"
+        # ]["camera_info"]["height"]
+        # # Reshape to (480, 640, 4) → (height, width, channels)
+        # right_wrist_cam_rgba_image = np.array(right_wrist_cam_rgb_flat).reshape(
+        #     (right_wrist_cam_rgb_height, right_wrist_cam_rgb_width, 4)
+        # )
+        # # Optional: remove alpha channel for RGB display
+        # right_wrist_cam_rgb_image = right_wrist_cam_rgba_image[:, :, :3]
+        # return right_wrist_cam_rgb_image.astype(np.uint8)
+
+        # img_raw = None
+        # if self._wait_for_img_right_wrist():
+        while True:
+            img_raw = self.sim_ros_node.get_img_right_wrist()
+            time.sleep(0.1)
+            if img_raw is not None:
+                break
+
+        return img_raw.astype(np.uint8)
     
     def _obs_instruction(self):
         # TODO(Xi): Hard-code now, redesign later.
@@ -420,7 +493,7 @@ class CogActPolicy(BasePolicy):
             image_list=[Image.fromarray(obs_dict["images"]["cam_top"])],
             task_description=obs_dict["task_description"],
             robot_status=obs_dict["robot_state"],
-            url="http://10.190.172.212:5900/api/inference",  # Example URL, change as needed
+            url="http://10.190.172.212:5300/api/inference",  # Example URL, change as needed
         )
 
         # action_raw["ROBOT_LEFT_TRANS"] = translation_sum(action_raw["ROBOT_LEFT_TRANS"]).reshape(1, 3)
