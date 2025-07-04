@@ -140,6 +140,7 @@ class CogActPolicy(BasePolicy):
             if img_raw is not None:
                 break
 
+        img_raw = img_raw[:, :, ::-1]
         return img_raw.astype(np.uint8)
         
     def _obs_left_wrist_cam_rgb_image(self, observations):
@@ -169,6 +170,7 @@ class CogActPolicy(BasePolicy):
                 break
 
 
+        img_raw = img_raw[:, :, ::-1]
         return img_raw.astype(np.uint8)
 
     def _obs_right_wrist_cam_rgb_image(self, observations):
@@ -197,6 +199,7 @@ class CogActPolicy(BasePolicy):
             if img_raw is not None:
                 break
 
+        img_raw = img_raw[:, :, ::-1]
         return img_raw.astype(np.uint8)
     
     def _obs_instruction(self):
