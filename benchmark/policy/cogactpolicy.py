@@ -72,14 +72,16 @@ class CogActPolicy(BasePolicy):
 
     def _obs_head_cam_rgb_image(self, observations):
         head_cam_rgb_flat = observations["camera"][
-            "/G1/link_pitch_head/Head_Camera_01"
+            "/G1/head_link2/Head_Camera"
         ]["rgb_camera"]
         head_cam_rgb_width = observations["camera"][
-            "/G1/link_pitch_head/Head_Camera_01"
+            "/G1/head_link2/Head_Camera"
         ]["camera_info"]["width"]
         head_cam_rgb_height = observations["camera"][
-            "/G1/link_pitch_head/Head_Camera_01"
+            "/G1/head_link2/Head_Camera"
         ]["camera_info"]["height"]
+        # TODO: here is a only temp resolution modification, for submission to challenge host,
+        # we only allowed processed on original resolution image.
         # Reshape to (480, 640, 4) → (height, width, channels)
         head_cam_rgba_image = np.array(head_cam_rgb_flat).reshape(
             (head_cam_rgb_height, head_cam_rgb_width, 4)
@@ -90,15 +92,15 @@ class CogActPolicy(BasePolicy):
 
     def _obs_left_wrist_cam_rgb_image(self, observations):
         left_wrist_cam_rgb_flat = observations["camera"][
-            "/G1/left_base_link/Left_Camera_01"
+            "/G1/gripper_l_base_link/Left_Camera"
         ]["rgb_camera"]
         left_wrist_cam_rgb_width = observations["camera"][
-            "/G1/left_base_link/Left_Camera_01"
+            "/G1/gripper_l_base_link/Left_Camera"
         ]["camera_info"]["width"]
         left_wrist_cam_rgb_height = observations["camera"][
-            "/G1/left_base_link/Left_Camera_01"
+            "/G1/gripper_l_base_link/Left_Camera"
         ]["camera_info"]["height"]
-        # Reshape to (480, 848, 4) → (height, width, channels)
+        # Reshape to (480, 640, 4) → (height, width, channels)
         left_wrist_cam_rgba_image = np.array(left_wrist_cam_rgb_flat).reshape(
             (left_wrist_cam_rgb_height, left_wrist_cam_rgb_width, 4)
         )
@@ -108,15 +110,15 @@ class CogActPolicy(BasePolicy):
     
     def _obs_right_wrist_cam_rgb_image(self, observations):
         right_wrist_cam_rgb_flat = observations["camera"][
-            "/G1/right_base_link/Right_Camera_01"
+            "/G1/gripper_r_base_link/Right_Camera"
         ]["rgb_camera"]
         right_wrist_cam_rgb_width = observations["camera"][
-            "/G1/right_base_link/Right_Camera_01"
+            "/G1/gripper_r_base_link/Right_Camera"
         ]["camera_info"]["width"]
         right_wrist_cam_rgb_height = observations["camera"][
-            "/G1/right_base_link/Right_Camera_01"
+            "/G1/gripper_r_base_link/Right_Camera"
         ]["camera_info"]["height"]
-        # Reshape to (480, 848, 4) → (height, width, channels)
+        # Reshape to (480, 640, 4) → (height, width, channels)
         right_wrist_cam_rgba_image = np.array(right_wrist_cam_rgb_flat).reshape(
             (right_wrist_cam_rgb_height, right_wrist_cam_rgb_width, 4)
         )
@@ -226,7 +228,7 @@ class CogActPolicy(BasePolicy):
         return observations["right_ee_pose"]
 
     def _obs_sim_head_cam_pose_in_world_T(self, observations):
-        head_cam_pose = observations["pose"]["/G1/link_pitch_head/Head_Camera_01"]
+        head_cam_pose = observations["pose"]["/G1/head_link2/Head_Camera"]
         xyz = head_cam_pose["position"]
         wxyz = head_cam_pose["rotation"]  # quaternion (w, x, y, z)
         return xyzwxyz2mat(
