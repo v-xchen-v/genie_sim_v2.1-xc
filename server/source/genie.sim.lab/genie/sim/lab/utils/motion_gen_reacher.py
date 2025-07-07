@@ -107,6 +107,9 @@ class CuroboMotion:
             num_trajopt_noisy_seeds=1,
             num_batch_trajopt_seeds=2,
             collision_activation_distance=0.0005,
+            # rotation_threshold=0.01,
+            # position_threshold=0.01,
+            # cspace_threshold=0.01
         )
 
         self.tensor_args = tensor_args

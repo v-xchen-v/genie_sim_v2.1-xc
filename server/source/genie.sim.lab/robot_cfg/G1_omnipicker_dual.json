@@ -122,7 +122,7 @@
     "joint_delta_time": 0.01,
     "lock_joints": [],
     "robot_description": {
-      "right": "/G1_omnipicker/G1_omnipicker.yml",
+      "right": "/G1_omnipicker/G1_omnipicker_right.yml",
       "left": "/G1_omnipicker/G1_omnipicker_left.yml"
     },
     "active_arm_joints": {

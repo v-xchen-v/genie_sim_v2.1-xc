@@ -200,7 +200,7 @@
       null,
       null
     ],
-    "robot_cfg": "G1_120s.json",
+    "robot_cfg": "G1_omnipicker_dual.json",
     "robot_id": "G1",
     "robot_init_pose": {
       "position": [
