@@ -82,7 +82,7 @@ class CogActPolicy(BasePolicy):
 
     def reset(self):
         target_position = [
-            0.3,
+            0.27,
             0.52359877,
             0,
             0.436332313,

@@ -870,7 +870,7 @@ robot_cfg:
       }
     lock_joints:
       {
-        "idx01_body_joint1": 0.3,
+        "idx01_body_joint1": 0.27,
         "idx02_body_joint2": 0.52359877,
         "idx72_gripper_r_inner_joint3": 0.0,
         "idx73_gripper_r_inner_joint4": 0.349,
@@ -956,7 +956,7 @@ robot_cfg:
         ]
       retract_config:
         [
-          0.3,
+          0.27,
           0.52359877,
           2.07,
           -0.61,
