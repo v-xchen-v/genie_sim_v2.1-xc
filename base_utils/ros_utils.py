@@ -162,12 +162,22 @@ class SimROSNode(Node):
         self.lock_tf = threading.Lock()
         self.tf_msg = TFMessage()
 
+        self.lock_img_head = threading.Lock()
+        self.lock_img_right_wrist = threading.Lock()
+        self.lock_img_left_wrist = threading.Lock()
+        self.img_head = None
+        self.img_right_wrist = None
+        self.img_left_wrist = None
+
         # loop
         self.loop_rate = self.create_rate(30.0)
 
     def callback_rgb_image_head(self, msg):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+
+            with self.lock_img_head:
+                self.img_head = cv_image
 
             success, compressed_data = cv2.imencode(".png", cv_image)
             if success:
@@ -187,6 +197,9 @@ class SimROSNode(Node):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
+            with self.lock_img_left_wrist:
+                self.img_left_wrist = cv_image
+
             success, compressed_data = cv2.imencode(".png", cv_image)
             if success:
                 compressed_msg = CompressedImage()
@@ -205,6 +218,9 @@ class SimROSNode(Node):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
+            with self.lock_img_right_wrist:
+                self.img_right_wrist = cv_image
+            
             success, compressed_data = cv2.imencode(".png", cv_image)
             if success:
                 compressed_msg = CompressedImage()
@@ -435,3 +451,16 @@ class SimROSNode(Node):
             cmd_msg.name = name
             cmd_msg.header.stamp = self.get_clock().now().to_msg()
             self.pub_joint_command.publish(cmd_msg)
+
+    def get_img_head(self):
+        with self.lock_img_head:
+            return self.img_head
+
+    def get_img_left_wrist(self):
+        with self.lock_img_left_wrist:
+            return self.img_left_wrist
+
+    def get_img_right_wrist(self):
+        with self.lock_img_right_wrist:
+            return self.img_right_wrist
+            
