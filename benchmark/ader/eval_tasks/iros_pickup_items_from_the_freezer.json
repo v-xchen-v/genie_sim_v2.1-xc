@@ -60,9 +60,9 @@
   },
   "recording_setting": {
     "camera_list": [
-      "/G1/link_pitch_head/Head_Camera_01",
-      "/G1/left_base_link/Left_Camera_01",
-      "/G1/right_base_link/Right_Camera_01"
+      "/G1/head_link2/Head_Camera",
+      "/G1/gripper_l_base_link/Left_Camera",
+      "/G1/gripper_r_base_link/Right_Camera"
     ],
     "fps": 30,
     "num_of_episode": 6

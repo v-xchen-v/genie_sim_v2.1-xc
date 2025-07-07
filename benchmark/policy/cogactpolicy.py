@@ -21,7 +21,7 @@ log_dir = "action_logs"
 os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
 LOG_MODEL_OUTPUT = False
-LOG_OBS = True
+LOG_OBS = False
 
 def translation_sum(trans):
     return np.array(trans).sum(axis=0)
@@ -80,6 +80,45 @@ class CogActPolicy(BasePolicy):
         #     time.sleep(0.5)
         time.sleep(SIM_INIT_TIME)
 
+    def reset(self):
+        target_position = [
+            0.3,
+            0.52359877,
+            0,
+            0.436332313,
+            -0.66857928,
+            0.67156327,
+            0.2008844,
+            -0.20287371,
+            0.27921745,
+            -0.282218840,
+            -1.28203404,
+            1.28208637,
+            0.84163094,
+            -0.84068865,
+            1.51518357,
+            -1.51710308,
+            -0.18715125,
+            0.18636601,
+            1,
+            -1,
+            1,
+            -1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+        ]
+        return target_position
+    
     def get_sim_time(self, sim_ros_node):
         sim_time = sim_ros_node.get_clock().now().nanoseconds * 1e-9
         return sim_time
@@ -637,15 +676,24 @@ class CogActPolicy(BasePolicy):
     ):
         ee_right_translation = action_raw["ROBOT_RIGHT_TRANS"].copy()  # delta
         if is_mock:
-            ee_right_translation = np.tile(
-                np.array([-0.01, 0, 0]), (16, 1)
-            )  # expect go left in real cam coord
+            # ee_right_translation = np.tile(
+            #     np.array([-0.01, 0, 0]), (16, 1)
+            # )  # expect go left in real cam coord
+            # ee_right_translation = np.tile(
+            #     np.array([0.01, 0, 0]), (16, 1)
+            # )  # expect go right in real cam coord
             # ee_right_translation = np.tile(
             #     np.array([0, 0.01, 0]), (16, 1)
             # )  # expect go down in real cam coord
             # ee_right_translation = np.tile(
+            #     np.array([0, -0.01, 0]), (16, 1)
+            # )  # expect go down in real cam coord
+            # ee_right_translation = np.tile(
             #     np.array([0, 0, -0.01]), (16, 1)
             # )  # expect go backward in real cam coord
+            ee_right_translation = np.tile(
+                np.array([0, 0, 0.01]), (16, 1)
+            )  # expect go backward in real cam coord
         ee_right_translation_s = self._obs_robot_ee_right_translation_in_real_head_cam(
             observations
         )

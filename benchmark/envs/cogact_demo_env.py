@@ -143,6 +143,8 @@ class CogActDemoEnv(DemoEnv):
         move_type= "AvoidObs"  # TODO: change to AvoidObs for now
 
         # move arm
+        logger.logger.info(f'ROBOT_RIGHT_POS_IN_HEAD_CAM: {actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"][:3, 3]}')
+        logger.logger.info(f'ROBOT_RIGHT_POS_IN_WORLD: {actions["ROBOT_RIGHT_POSE_IN_WORLD"][:3, 3]}')
         target_right_ee_pose = actions["ROBOT_RIGHT_POSE_IN_WORLD"]
         self.robot.move_pose(
             target_right_ee_pose, type=move_type, arm="right", block=True
@@ -194,7 +196,7 @@ class CogActDemoEnv(DemoEnv):
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
         execute_K = min(8, action_len)
-        execute_step_N=8
+        execute_step_N=4
         for execute_step_id in range(execute_K):
             is_first_or_last = (execute_step_id == 0 or execute_step_id == execute_K - 1)
             is_selected_step = (execute_step_id + 1) % execute_step_N == 0
