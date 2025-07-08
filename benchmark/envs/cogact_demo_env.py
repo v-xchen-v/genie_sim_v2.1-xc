@@ -96,6 +96,22 @@ class CogActDemoEnv(DemoEnv):
         # right_ee_pose = self._get_ee_pose_in_world("/G1/right_base_link", observation_raw)
         left_ee_pose2 = self._get_ee_pose_in_world_from_prim("/G1/gripper_l_base_link")
         right_ee_pose2 = self._get_ee_pose_in_world_from_prim("/G1/gripper_r_base_link")
+
+        # # T_world2base = self._get_ee_pose_in_world_from_prim("/G1/base_link")
+        # T_world2pitchhead = self._get_ee_pose_in_world_from_prim("/G1/head_link2")
+        # T_world2cam = self._get_ee_pose_in_world_from_prim("/G1/head_link2/Head_Camera")
+        # # T_pitchhead2base = np.linalg.inv(T_world2pitchhead) @ T_world2base
+        # import pickle
+
+        # log_data = {
+        #     "head_cam": T_world2cam,
+        #     "link_pitch_head": T_world2pitchhead,
+        # }
+
+        # # Use mode 'wb' (write binary) when writing with pickle
+        # with open('head_cam_and_link_pitch_head.pkl', 'wb') as f:
+        #     pickle.dump(log_data, f)
+
         observation_raw["right_ee_pose"] = right_ee_pose2
         observation_raw["left_ee_pose"] = left_ee_pose2
         return observation_raw
@@ -150,11 +166,11 @@ class CogActDemoEnv(DemoEnv):
             target_right_ee_pose, type=move_type, arm="right", block=True
         )
 
-        # # TODO: move left arm and figure out do we need parallel execution
-        # target_left_ee_pose = actions["ROBOT_LEFT_POSE_IN_WORLD"]
-        # self.robot.move_pose(
-        #     target_left_ee_pose, type=move_type, arm="left", block=True
-        # )
+        # TODO: move left arm and figure out do we need parallel execution
+        target_left_ee_pose = actions["ROBOT_LEFT_POSE_IN_WORLD"]
+        self.robot.move_pose(
+            target_left_ee_pose, type=move_type, arm="left", block=True
+        )
 
         # move gripper
         right_gripper_action = actions["ROBOT_RIGHT_GRIPPER"][0]
@@ -165,13 +181,13 @@ class CogActDemoEnv(DemoEnv):
             right_gripper_action = "close"
             self.robot.set_gripper_action(right_gripper_action, arm="right")
 
-        # left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
-        # if left_gripper_action > 0.5:
-        #     left_gripper_action = "open"
-        #     self.robot.set_gripper_action(left_gripper_action, arm="left")
-        # else:
-        #     left_gripper_action = "close"
-        #     self.robot.set_gripper_action(left_gripper_action, arm="left")
+        left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
+        if left_gripper_action > 0.5:
+            left_gripper_action = "open"
+            self.robot.set_gripper_action(left_gripper_action, arm="left")
+        else:
+            left_gripper_action = "close"
+            self.robot.set_gripper_action(left_gripper_action, arm="left")
 
     def _get_per_step_actons(self, actions, step_id):
         """
