@@ -559,7 +559,7 @@
       null,
       null
     ],
-    "robot_cfg": "G1_omnipicker.json",
+    "robot_cfg": "G1_omnipicker_dual_iros_clear_the_countertop_waste.json",
     "robot_id": "G1",
     "robot_init_pose": {
       "work_table": {
