@@ -70,6 +70,7 @@ import rclpy
 class CogActPolicy(BasePolicy):
     def __init__(self, task_name=None) -> None:
         super().__init__(task_name)
+        self.task_name = task_name
 
         SIM_INIT_TIME = 10
         # while rclpy.ok():
