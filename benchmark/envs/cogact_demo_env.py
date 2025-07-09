@@ -94,8 +94,8 @@ class CogActDemoEnv(DemoEnv):
         right_ee_pose = self.robot.get_ee_pose(ee_type="gripper", id="right")
         # left_ee_pose = self._get_ee_pose_in_world("/G1/left_base_link", observation_raw)
         # right_ee_pose = self._get_ee_pose_in_world("/G1/right_base_link", observation_raw)
-        left_ee_pose2 = self._get_ee_pose_in_world_from_prim("/G1/gripper_l_base_link")
-        right_ee_pose2 = self._get_ee_pose_in_world_from_prim("/G1/gripper_r_base_link")
+        left_ee_pose2 = self._get_ee_pose_in_world_from_prim("/G1/arm_l_end_link")
+        right_ee_pose2 = self._get_ee_pose_in_world_from_prim("/G1/arm_r_end_link")
 
         # # T_world2base = self._get_ee_pose_in_world_from_prim("/G1/base_link")
         # T_world2pitchhead = self._get_ee_pose_in_world_from_prim("/G1/head_link2")
