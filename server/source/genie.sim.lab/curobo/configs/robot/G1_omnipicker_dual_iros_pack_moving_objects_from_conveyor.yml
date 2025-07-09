@@ -19,8 +19,8 @@ robot_cfg:
     usd_path: null
 
     base_link: "base_link"
-    ee_link: "gripper_r_base_link"
-    link_names: ["gripper_r_base_link", "gripper_l_base_link"]
+    ee_link: "arm_r_end_link"
+    link_names: ["arm_r_end_link", "arm_l_end_link"]
 
     collision_link_names:
       [

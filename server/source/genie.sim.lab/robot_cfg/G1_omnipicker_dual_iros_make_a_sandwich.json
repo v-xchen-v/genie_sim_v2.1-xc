@@ -44,12 +44,12 @@
       ]
     },
     "end_effector_name": {
-      "left": "gripper_l_base_link",
-      "right": "gripper_r_base_link"
+      "left": "arm_l_end_link",
+      "right": "arm_r_end_link"
     },
     "end_effector_prim_path": {
-      "left": "/G1/gripper_l_base_link",
-      "right": "/G1/gripper_r_base_link"
+      "left": "/G1/arm_l_end_link",
+      "right": "/G1/arm_r_end_link"
     },
     "finger_names": {
       "left": [
