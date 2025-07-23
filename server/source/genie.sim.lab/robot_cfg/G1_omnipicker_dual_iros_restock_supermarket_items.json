@@ -1,16 +1,16 @@
 {
   "camera": {
     "/G1/gripper_l_base_link/Left_Camera": [
-      640,
+      848,
       480
     ],
     "/G1/gripper_r_base_link/Right_Camera": [
-      640,
+      848,
       480
     ],
     "/G1/head_link2/Head_Camera": [
-      640,
-      480
+      1280,
+      720
     ],
     "/G1/head_link2/Top_Camera": [
       1280,
