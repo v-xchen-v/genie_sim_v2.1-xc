@@ -29,6 +29,8 @@ from base_utils.logger import Logger
 logger = Logger()  # Create singleton instance
 
 from scipy.spatial.transform import Rotation as R
+
+
 def xyzwxyz2mat(xyzwxyz):
     quat = xyzwxyz[3:7]
     rot = R.from_quat(quat, scalar_first=True).as_matrix()
@@ -36,6 +38,7 @@ def xyzwxyz2mat(xyzwxyz):
     mat[0:3, 0:3] = rot
     mat[0:3, 3] = xyzwxyz[0:3]
     return mat
+
 
 class CogActDemoEnv(DemoEnv):
     def __init__(self, robot: Robot, task_file: str, init_task_config, policy=None):
@@ -47,7 +50,7 @@ class CogActDemoEnv(DemoEnv):
         self.specific_task_name = self.init_task_config["specific_task_name"]
 
         self.states_objects_by_name = {}
-        # init task_file                                                
+        # init task_file
         self.load(task_file)
         self.load_task_setup()
 
@@ -73,7 +76,7 @@ class CogActDemoEnv(DemoEnv):
 
         data_keys = {
             "camera": {
-                "camera_prim_list": self.camera_list[:3], # 1. head 2.3 wrist cameras
+                "camera_prim_list": self.camera_list[:3],  # 1. head 2.3 wrist cameras
                 "render_depth": False,
                 "render_semantic": False,
             },
@@ -122,45 +125,55 @@ class CogActDemoEnv(DemoEnv):
         """
         # Get the end-effector pose in world coordinates
         pose = self.robot.client.get_object_pose(ee_prim_path)
-        
-        xyz = [pose.object_pose.position.x,
-               pose.object_pose.position.y,
-               pose.object_pose.position.z]
-        wxyz = [pose.object_pose.rpy.rw,
-                pose.object_pose.rpy.rx,
-                pose.object_pose.rpy.ry,
-                pose.object_pose.rpy.rz]
-        
+
+        xyz = [
+            pose.object_pose.position.x,
+            pose.object_pose.position.y,
+            pose.object_pose.position.z,
+        ]
+        wxyz = [
+            pose.object_pose.rpy.rw,
+            pose.object_pose.rpy.rx,
+            pose.object_pose.rpy.ry,
+            pose.object_pose.rpy.rz,
+        ]
+
         ee_pose = xyzwxyz2mat(np.concatenate([xyz, wxyz]))  # Convert to 4x4 matrix
-        
+
         if DEBUGGING:
             logger.debug(f"End-effector({ee_prim_path}) pose in world: {ee_pose}")
-        
+
         return ee_pose
-    
+
     def _get_ee_pose_in_world(self, ee_prim_path, observation_raw):
         """
         Get the end-effector pose in world coordinates.
         """
-        position_xyz=observation_raw['pose'][ee_prim_path]['position']
-        rotation_wxyz=observation_raw['pose'][ee_prim_path]['rotation']
-        
+        position_xyz = observation_raw["pose"][ee_prim_path]["position"]
+        rotation_wxyz = observation_raw["pose"][ee_prim_path]["rotation"]
+
         if DEBUGGING:
-            logger.debug(f"End-effector({ee_prim_path}) pose in world: {position_xyz}, {rotation_wxyz}")
-        
+            logger.debug(
+                f"End-effector({ee_prim_path}) pose in world: {position_xyz}, {rotation_wxyz}"
+            )
+
         ee_pose = xyzwxyz2mat(
             np.concatenate([position_xyz, rotation_wxyz])
         )  # Covert to 4x4 matrix
-        
+
         return ee_pose
-    
+
     def _robot_move(self, actions):
         # move_type = "Normal"  # "Norsssmal", "AvoidObs"
-        move_type= "AvoidObs"  # TODO: change to AvoidObs for now
+        move_type = "AvoidObs"  # TODO: change to AvoidObs for now
 
         # move arm
-        logger.logger.info(f'ROBOT_RIGHT_POS_IN_HEAD_CAM: {actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"][:3, 3]}')
-        logger.logger.info(f'ROBOT_RIGHT_POS_IN_WORLD: {actions["ROBOT_RIGHT_POSE_IN_WORLD"][:3, 3]}')
+        logger.logger.info(
+            f'ROBOT_RIGHT_POS_IN_HEAD_CAM: {actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"][:3, 3]}'
+        )
+        logger.logger.info(
+            f'ROBOT_RIGHT_POS_IN_WORLD: {actions["ROBOT_RIGHT_POSE_IN_WORLD"][:3, 3]}'
+        )
         target_right_ee_pose = actions["ROBOT_RIGHT_POSE_IN_WORLD"]
         self.robot.move_pose(
             target_right_ee_pose, type=move_type, arm="right", block=True
@@ -189,7 +202,7 @@ class CogActDemoEnv(DemoEnv):
             left_gripper_action = "close"
             self.robot.set_gripper_action(left_gripper_action, arm="left")
 
-    def _get_per_step_actons(self, actions, step_id):
+    def _get_per_step_actions(self, actions, step_id):
         """
         Get the action for the current step based on the actions dictionary and step_id.
         """
@@ -211,17 +224,17 @@ class CogActDemoEnv(DemoEnv):
         self.current_step += 1
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
-        execute_K = min(8, action_len)
-        execute_step_N=4
+        execute_K = min(16, action_len)
+        execute_step_N = 8
         for execute_step_id in range(execute_K):
-            is_first_or_last = (execute_step_id == 0 or execute_step_id == execute_K - 1)
+            # is_first_or_last = execute_step_id == 0 or execute_step_id == execute_K - 1
+            is_last = execute_step_id == execute_K - 1
             is_selected_step = (execute_step_id + 1) % execute_step_N == 0
-            if not is_first_or_last and not is_selected_step:
+            if not is_last and not is_selected_step:
                 continue
-            
-            self._robot_move(self._get_per_step_actons(actions, execute_step_id))
 
-        
+            self._robot_move(self._get_per_step_actions(actions, execute_step_id))
+
         observaion = None
         info = {}
         done = False
@@ -231,11 +244,10 @@ class CogActDemoEnv(DemoEnv):
         self.task.step(self)
         need_update = True
         self.action_update()
-        
+
         if done:
             info["final_step"] = self.current_step
             self.reset()
 
         # return observaion, None, done, info
         return observaion, self.has_done, need_update, self.task.task_progress
-        

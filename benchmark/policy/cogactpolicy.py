@@ -23,14 +23,17 @@ MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
 LOG_MODEL_OUTPUT = False
 LOG_OBS = False
 
+
 def translation_sum(trans):
     return np.array(trans).sum(axis=0)
+
 
 def rotation_sum(rotation_euler):
     rotation_sum = np.eye(3)
     for euler in rotation_euler:
-        rotation_sum = R.from_euler('xyz', euler).as_matrix() @ rotation_sum
-    return R.from_matrix(rotation_sum).as_euler('xyz', degrees=False)
+        rotation_sum = R.from_euler("xyz", euler).as_matrix() @ rotation_sum
+    return R.from_matrix(rotation_sum).as_euler("xyz", degrees=False)
+
 
 def serialize_action_raw(action_raw):
     return {k: v.tolist() for k, v in action_raw.items()}
@@ -65,7 +68,10 @@ def mat2xyzwxyz(mat):
     xyz = mat[0:3, 3]
     xyzwxyz = np.concatenate([xyz, quat])
     return xyzwxyz
+
+
 import rclpy
+
 
 class CogActPolicy(BasePolicy):
     def __init__(self, task_name=None) -> None:
@@ -119,7 +125,7 @@ class CogActPolicy(BasePolicy):
     #         0,
     #     ]
     #     return target_position
-    
+
     def get_sim_time(self, sim_ros_node):
         sim_time = sim_ros_node.get_clock().now().nanoseconds * 1e-9
         return sim_time
@@ -132,7 +138,7 @@ class CogActPolicy(BasePolicy):
     #         rclpy.spin_once(self.sim_ros_node, timeout_sec=0.5)
     #         time.sleep(0.5)
     #     return True
-    
+
     # def _wait_for_img_left_wrist(self, timeout_sec=50.0):
     #     start_time = time.time()
     #     while self.sim_ros_node.get_img_left_wrist() is None:
@@ -141,7 +147,7 @@ class CogActPolicy(BasePolicy):
     #         rclpy.spin_once(self.sim_ros_node, timeout_sec=0.5)
     #         time.sleep(0.5)
     #     return True
-    
+
     # def _wait_for_img_right_wrist(self, timeout_sec=50.0):
     #     start_time = time.time()
     #     while self.sim_ros_node.get_img_right_wrist() is None:
@@ -150,7 +156,7 @@ class CogActPolicy(BasePolicy):
     #         rclpy.spin_once(self.sim_ros_node, timeout_sec=0.5)
     #         time.sleep(0.5)
     #     return True
-    
+
     def _obs_head_cam_rgb_image(self, observations):
         # head_cam_rgb_flat = observations["camera"][
         #     "/G1/head_link2/Head_Camera"
@@ -171,7 +177,6 @@ class CogActPolicy(BasePolicy):
         # head_cam_rgb_image = head_cam_rgba_image[:, :, :3]
         # return head_cam_rgb_image.astype(np.uint8)
 
-
         # img_raw = None
         # if self._wait_for_img_head():
         while True:
@@ -180,9 +185,9 @@ class CogActPolicy(BasePolicy):
             if img_raw is not None:
                 break
 
-        img_raw = img_raw[:, :, ::-1]
+        img_raw = img_raw[:, :, ::-1]  # Convert BGR to RGB
         return img_raw.astype(np.uint8)
-        
+
     def _obs_left_wrist_cam_rgb_image(self, observations):
         # left_wrist_cam_rgb_flat = observations["camera"][
         #     "/G1/gripper_l_base_link/Left_Camera"
@@ -208,7 +213,6 @@ class CogActPolicy(BasePolicy):
             time.sleep(0.1)
             if img_raw is not None:
                 break
-
 
         img_raw = img_raw[:, :, ::-1]
         return img_raw.astype(np.uint8)
@@ -241,11 +245,12 @@ class CogActPolicy(BasePolicy):
 
         img_raw = img_raw[:, :, ::-1]
         return img_raw.astype(np.uint8)
-    
+
     def _obs_instruction(self):
         lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
         if self.task_name == "iros_clear_the_countertop_waste":
-            lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
+            # lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
+            lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm."
         elif self.task_name == "iros_restock_supermarket_items":
             lang = "Pick up the brown plum juice from the restock box with the right arm.;Place the brown plum juice on the shelf where the brown plum juice is located with the right arm."
         elif self.task_name == "iros_clear_table_in_the_restaurant":
@@ -263,7 +268,8 @@ class CogActPolicy(BasePolicy):
         elif self.task_name == "iros_pickup_items_from_the_freezer":
             lang = "Open the freezer door with the right arm;Pick up the caviar from the freezer with the right arm;Place the caviar held in the right arm into the shopping cart;Close the freezer door with both arms"
         elif self.task_name == "iros_make_a_sandwich":
-            lang = "Pick up the bread slice from the toaster on the table with the right arm;Place the picked bread slice into the plate on the table with the right arm;Pick up the ham slice from the box on the table with the left arm;Place the picked ham slice onto the bread slice in the plate on the table with the left arm;Pick up the lettuce slice from the box on the table with the right arm;Place the picked lettuce slice onto the ham slice in the plate on the table with the right arm;Pick up the bread slice from the toaster on the table with the right arm;Place the bread slice onto the lettuce slice in the plate on the table with the right arm"
+            # lang = "Pick up the bread slice from the toaster on the table with the right arm;Place the picked bread slice into the plate on the table with the right arm;Pick up the ham slice from the box on the table with the left arm;Place the picked ham slice onto the bread slice in the plate on the table with the left arm;Pick up the lettuce slice from the box on the table with the right arm;Place the picked lettuce slice onto the ham slice in the plate on the table with the right arm;Pick up the bread slice from the toaster on the table with the right arm;Place the bread slice onto the lettuce slice in the plate on the table with the right arm"
+            lang = "Pick up the bread slice from the toaster on the table with the right arm"
         else:
             raise ValueError("task does not exist")
         # TODO(Xi): Hard-code now, redesign later.
@@ -400,12 +406,14 @@ class CogActPolicy(BasePolicy):
                 [0, -1, 0],  # realcam +Y → simcam -Y
                 [0, 0, -1],  # realcam +Z → simcam -Z
             ]
-        ) # seems align to the "/World" coordinate system in the simulation
+        )  # seems align to the "/World" coordinate system in the simulation
         T_simcam2realcam = np.eye(4)
         T_simcam2realcam[:3, :3] = R_real2sim
         T_realcam_in_simcam = T_simcam2realcam
         # T_simcam_to_world = np.linalg.inv(T_simcam_in_world)  # T_world2simcam
-        T_realcam_in_world = T_simcam_in_world @ T_realcam_in_simcam # FIX: changed from right multiply to left multiply, remember pose in right
+        T_realcam_in_world = (
+            T_simcam_in_world @ T_realcam_in_simcam
+        )  # FIX: changed from right multiply to left multiply, remember pose in right
         return T_realcam_in_world
 
     def _get_object_pose_in_camera(self, T_world2cam, T_object_in_world):
@@ -496,17 +504,73 @@ class CogActPolicy(BasePolicy):
         T_simcam_in_world = self._obs_sim_head_cam_pose_in_world_T(observations)
         T_eeright_in_world = self._obs_robot_ee_right_in_world_T(observations)
 
-        T_eeright_in_simcam = self._get_object_pose_in_camera(T_simcam_in_world, T_eeright_in_world)
+        T_eeright_in_simcam = self._get_object_pose_in_camera(
+            T_simcam_in_world, T_eeright_in_world
+        )
         return R.from_matrix(T_eeright_in_simcam[:3, :3]).as_euler("xyz", degrees=False)
 
     def _obs_robot_ee_right_rotation_euler_xyz_in_real_head_cam(self, observations):
         T_realcam_in_world = self._obs_real_head_cam_pose_in_world_T(observations)
         T_eeright_in_world = self._obs_robot_ee_right_in_world_T(observations)
-        
+
         T_eeright_in_realcam = self._get_object_pose_in_camera(
             T_realcam_in_world, T_eeright_in_world
         )
-        return R.from_matrix(T_eeright_in_realcam[:3, :3]).as_euler("xyz", degrees=False)
+        return R.from_matrix(T_eeright_in_realcam[:3, :3]).as_euler(
+            "xyz", degrees=False
+        )
+
+    # def resize_frames(self, frame, target_size=(224, 224)):
+    #     h, w = frame.shape[:2]
+    #     new_h = w / 4 * 3
+    #     if h != new_h:
+    #         pad_height = int((new_h - h) / 2)
+    #         frame = np.pad(
+    #             frame,
+    #             ((pad_height, pad_height), (0, 0), (0, 0)),
+    #             mode="constant",
+    #             constant_values=0,
+    #         )
+    #     img = Image.fromarray(frame)
+    #     img = img.resize(target_size, Image.LANCZOS)
+    #     return np.array(img)
+
+    def resize_frames(self, frame, target_size=(224, 224)):
+        h, w = frame.shape[:2]
+        target_aspect = 4 / 3
+        current_aspect = w / h
+
+        # Allow small floating point tolerance
+        if abs(current_aspect - target_aspect) < 1e-3:
+            padded = frame  # No padding needed
+        elif current_aspect > target_aspect:
+            # Image is too wide → pad height
+            new_h = int(w / target_aspect)
+            pad_total = new_h - h
+            pad_top = pad_total // 2
+            pad_bottom = pad_total - pad_top
+            padded = np.pad(
+                frame,
+                ((pad_top, pad_bottom), (0, 0), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+        else:
+            # Image is too tall → pad width
+            new_w = int(h * target_aspect)
+            pad_total = new_w - w
+            pad_left = pad_total // 2
+            pad_right = pad_total - pad_left
+            padded = np.pad(
+                frame,
+                ((0, 0), (pad_left, pad_right), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+
+        img = Image.fromarray(padded)
+        img = img.resize(target_size, Image.LANCZOS)
+        return np.array(img)
 
     def act(self, observations, **kwargs):
         # At First, got all required observations for CogAct, includes:
@@ -516,7 +580,7 @@ class CogActPolicy(BasePolicy):
 
         # head camera rgb frame
         head_cam_rgb_image = self._obs_head_cam_rgb_image(observations)
-        
+
         # wrist camera rgb frame
         left_wrist_cam_rgb_image = self._obs_left_wrist_cam_rgb_image(observations)
         right_wrist_cam_rgb_image = self._obs_right_wrist_cam_rgb_image(observations)
@@ -550,17 +614,21 @@ class CogActPolicy(BasePolicy):
                 "ROBOT_RIGHT_GRIPPER": np.zeros((1,), dtype=np.float32).tolist(),
             },
             "images": {
-                "cam_top": head_cam_rgb_image,
-                "head_left": left_wrist_cam_rgb_image,
-                "head_right": right_wrist_cam_rgb_image,
+                "cam_top": self.resize_frames(head_cam_rgb_image),
+                "head_left": self.resize_frames(left_wrist_cam_rgb_image),
+                "head_right": self.resize_frames(right_wrist_cam_rgb_image),
             },
         }
 
         action_raw = self._call_infer(
-            image_list=[Image.fromarray(obs_dict["images"]["cam_top"])],
+            image_list=[
+                Image.fromarray(obs_dict["images"]["cam_top"]),
+                Image.fromarray(obs_dict["images"]["head_left"]),
+                Image.fromarray(obs_dict["images"]["head_right"]),
+            ],
             task_description=obs_dict["task_description"],
             robot_status=obs_dict["robot_state"],
-            url="http://10.190.172.212:5300/api/inference",  # Example URL, change as needed
+            url="http://10.190.172.212:6020/api/inference",  # Example URL, change as needed
         )
 
         # action_raw["ROBOT_LEFT_TRANS"] = translation_sum(action_raw["ROBOT_LEFT_TRANS"]).reshape(1, 3)
@@ -641,25 +709,19 @@ class CogActPolicy(BasePolicy):
         ee_left_rot_eular_xyz_s = (
             self._obs_robot_ee_left_rotation_euler_xyz_in_real_head_cam(observations)
         )
-        
-        rotation_sum = R.from_euler(
-            "xyz", ee_left_rot_eular_xyz_s, degrees=False
-        )
+
+        rotation_sum = R.from_euler("xyz", ee_left_rot_eular_xyz_s, degrees=False)
         rotaion_list = []
         for delta in ee_left_rot_euler_xyz_delta:
-            rotation_sum = R.from_euler(
-                "xyz", delta, degrees=False
-            ) * rotation_sum
+            rotation_sum = R.from_euler("xyz", delta, degrees=False) * rotation_sum
             rotaion_list.append(rotation_sum.as_euler("xyz", degrees=False))
         return np.array(rotaion_list)
 
     def _action_ee_right_rot_eular_xyz_in_real_head_cam(self, action_raw, observations):
         ee_right_rot_euler_xyz_delta = action_raw["ROBOT_RIGHT_ROT_EULER"]  # delta
         if MOCK_DELTA_TRANS_IN_REALCAM_COORD:
-            ee_right_rot_euler_xyz_delta = np.tile(
-                np.array([0, 0, 0]), (16, 1)
-            )
-            
+            ee_right_rot_euler_xyz_delta = np.tile(np.array([0, 0, 0]), (16, 1))
+
         ee_right_rot_eular_xyz_s = (
             self._obs_robot_ee_right_rotation_euler_xyz_in_real_head_cam(observations)
         )
@@ -668,14 +730,10 @@ class CogActPolicy(BasePolicy):
         # ee_right_rot_euler_xyz_splus1 = (
         #     ee_right_rot_eular_xyz_s + ee_right_rot_euler_xyz_delta
         # )
-        rotation_sum = R.from_euler(
-            "xyz", ee_right_rot_eular_xyz_s, degrees=False
-        )
+        rotation_sum = R.from_euler("xyz", ee_right_rot_eular_xyz_s, degrees=False)
         rotaion_list = []
         for delta in ee_right_rot_euler_xyz_delta:
-            rotation_sum = R.from_euler(
-                "xyz", delta, degrees=False
-            ) * rotation_sum
+            rotation_sum = R.from_euler("xyz", delta, degrees=False) * rotation_sum
             rotaion_list.append(rotation_sum.as_euler("xyz", degrees=False))
         return np.array(rotaion_list)
 
@@ -685,7 +743,9 @@ class CogActPolicy(BasePolicy):
         observations,
         is_mock=MOCK_DELTA_TRANS_IN_REALCAM_COORD,
     ):
-        ee_left_translation = action_raw["ROBOT_LEFT_TRANS"].copy()  # delta, shape [n_step, 3]
+        ee_left_translation = action_raw[
+            "ROBOT_LEFT_TRANS"
+        ].copy()  # delta, shape [n_step, 3]
         if is_mock:
             ee_left_translation = np.tile(np.array([0.01, 0, 0]), (16, 1))
         ee_left_translation_s = self._obs_robot_ee_left_translation_in_real_head_cam(
@@ -722,7 +782,7 @@ class CogActPolicy(BasePolicy):
         ee_right_translation_s = self._obs_robot_ee_right_translation_in_real_head_cam(
             observations
         )
-        
+
         for i in range(len(ee_right_translation)):
             ee_right_translation_s += ee_right_translation[i]
             ee_right_translation[i] = ee_right_translation_s.copy()
