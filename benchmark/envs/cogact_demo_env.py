@@ -202,7 +202,7 @@ class CogActDemoEnv(DemoEnv):
             left_gripper_action = "close"
             self.robot.set_gripper_action(left_gripper_action, arm="left")
 
-    def _get_per_step_actons(self, actions, step_id):
+    def _get_per_step_actions(self, actions, step_id):
         """
         Get the action for the current step based on the actions dictionary and step_id.
         """
@@ -224,8 +224,8 @@ class CogActDemoEnv(DemoEnv):
         self.current_step += 1
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
-        execute_K = min(8, action_len)
-        execute_step_N = 4
+        execute_K = min(16, action_len)
+        execute_step_N = 8
         for execute_step_id in range(execute_K):
             # is_first_or_last = execute_step_id == 0 or execute_step_id == execute_K - 1
             is_last = execute_step_id == execute_K - 1
