@@ -254,6 +254,14 @@ class CogActPolicy(BasePolicy):
         subinstruction = [
             action.strip() for action in instruction.split(";") if action.strip()
         ]
+        # and first 1 have the first split, second 1 have the second split jointed and so on
+        if len(subinstruction) == 0:
+            raise ValueError("Instruction is empty or only contains semicolons.")
+        if len(subinstruction) == 1:
+            return subinstruction[0]
+        # Join the first two actions and return the rest as is
+        for i in range(1, len(subinstruction)):
+            subinstruction[i] = subinstruction[i - 1] + ";" + subinstruction[i]
         return subinstruction
 
     def _obs_instruction(self):

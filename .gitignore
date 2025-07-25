@@ -28,3 +28,4 @@ checkpoint
 checkpoints
 
 server/source/genie.sim.lab/robot_cfg/*_recording.json
+/action_logs

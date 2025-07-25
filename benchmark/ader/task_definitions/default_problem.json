@@ -1,18 +1,18 @@
 {
-  "Acts": [
-    {
-      "ActionList": [
+    "Acts": [
         {
-          "ActionSetWaitAny": [
-            {
-              "Timeout": 1000
-            }
-          ]
+            "ActionList": [
+                {
+                    "ActionSetWaitAny": [
+                        {
+                            "Timeout": 2000
+                        }
+                    ]
+                }
+            ]
         }
-      ]
-    }
-  ],
-  "Init": [],
-  "Objects": [],
-  "Problem": "default_problem"
+    ],
+    "Init": [],
+    "Objects": [],
+    "Problem": "default_problem"
 }

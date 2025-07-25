@@ -6,8 +6,16 @@ import imageio
 from tqdm import tqdm
 
 # -------- CONFIG --------
-LOG_DIR = "/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/iros_make_a_sandwich"
-VIDEO_OUTPUT = "/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/iros_make_a_sandwich/stacked_view_video.mp4"
+# task_name = "iros_make_a_sandwich"
+# task_name = "iros_clear_table_in_the_restaurant"
+# task_name = "iros_restock_supermarket_items"
+# task_name = "iros_stamp_the_seal"
+task_name = "iros_pack_moving_objects_from_conveyor"
+# task_name = "iros_clear_the_countertop_waste"
+LOG_DIR = (
+    f"/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/{task_name}"
+)
+VIDEO_OUTPUT = f"/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/{task_name}/stacked_view_video.mp4"
 N = None  # Use first N files sorted by timestamp
 from datetime import datetime
 
