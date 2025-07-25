@@ -21,7 +21,7 @@ log_dir = "action_logs"
 os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
 LOG_MODEL_OUTPUT = False
-LOG_OBS = False
+LOG_OBS = True
 
 
 def translation_sum(trans):
@@ -246,11 +246,28 @@ class CogActPolicy(BasePolicy):
         img_raw = img_raw[:, :, ::-1]
         return img_raw.astype(np.uint8)
 
+    def _split_instruction(self, instruction):
+        """
+        Split the instruction into individual actions.
+        """
+        # Split by semicolon and strip whitespace
+        subinstruction = [
+            action.strip() for action in instruction.split(";") if action.strip()
+        ]
+        # and first 1 have the first split, second 1 have the second split jointed and so on
+        if len(subinstruction) == 0:
+            raise ValueError("Instruction is empty or only contains semicolons.")
+        if len(subinstruction) == 1:
+            return subinstruction[0]
+        # Join the first two actions and return the rest as is
+        for i in range(1, len(subinstruction)):
+            subinstruction[i] = subinstruction[i - 1] + ";" + subinstruction[i]
+        return subinstruction
+
     def _obs_instruction(self):
         lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
         if self.task_name == "iros_clear_the_countertop_waste":
-            # lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
-            lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm."
+            lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
         elif self.task_name == "iros_restock_supermarket_items":
             lang = "Pick up the brown plum juice from the restock box with the right arm.;Place the brown plum juice on the shelf where the brown plum juice is located with the right arm."
         elif self.task_name == "iros_clear_table_in_the_restaurant":
@@ -268,8 +285,7 @@ class CogActPolicy(BasePolicy):
         elif self.task_name == "iros_pickup_items_from_the_freezer":
             lang = "Open the freezer door with the right arm;Pick up the caviar from the freezer with the right arm;Place the caviar held in the right arm into the shopping cart;Close the freezer door with both arms"
         elif self.task_name == "iros_make_a_sandwich":
-            # lang = "Pick up the bread slice from the toaster on the table with the right arm;Place the picked bread slice into the plate on the table with the right arm;Pick up the ham slice from the box on the table with the left arm;Place the picked ham slice onto the bread slice in the plate on the table with the left arm;Pick up the lettuce slice from the box on the table with the right arm;Place the picked lettuce slice onto the ham slice in the plate on the table with the right arm;Pick up the bread slice from the toaster on the table with the right arm;Place the bread slice onto the lettuce slice in the plate on the table with the right arm"
-            lang = "Pick up the bread slice from the toaster on the table with the right arm"
+            lang = "Pick up the bread slice from the toaster on the table with the right arm;Place the picked bread slice into the plate on the table with the right arm;Pick up the ham slice from the box on the table with the left arm;Place the picked ham slice onto the bread slice in the plate on the table with the left arm;Pick up the lettuce slice from the box on the table with the right arm;Place the picked lettuce slice onto the ham slice in the plate on the table with the right arm;Pick up the bread slice from the toaster on the table with the right arm;Place the bread slice onto the lettuce slice in the plate on the table with the right arm"
         else:
             raise ValueError("task does not exist")
         # TODO(Xi): Hard-code now, redesign later.
@@ -280,7 +296,9 @@ class CogActPolicy(BasePolicy):
         # instruction = (
         #     "Pick up the plate containing pasta on the table with the right arm."
         # )
-        instruction = lang
+        instruction = self._split_instruction(lang)[
+            0
+        ]  # Hardcoded for now, handle by model later
         return instruction
 
     # def _obs_robot_ee_left_translation(self, observations):
@@ -645,17 +663,20 @@ class CogActPolicy(BasePolicy):
             import time
             import pickle
 
-            os.makedirs(log_dir, exist_ok=True)
+            task_log_dir = os.path.join(log_dir, self.task_name)
+            os.makedirs(task_log_dir, exist_ok=True)
             # Use timestamp or step_id as filename
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             if LOG_MODEL_OUTPUT:
-                filename = os.path.join(log_dir, f"action_raw_{timestamp}.pkl")
+                filename = os.path.join(task_log_dir, f"action_raw_{timestamp}.pkl")
                 with open(filename, "wb") as f:
                     pickle.dump(action_raw, f)
 
             if LOG_OBS:
                 # also save the observations
-                obs_filename = os.path.join(log_dir, f"observations_{timestamp}.pkl")
+                obs_filename = os.path.join(
+                    task_log_dir, f"observations_{timestamp}.pkl"
+                )
                 with open(obs_filename, "wb") as f:
                     # pickle.dump(observations, f)
                     pickle.dump(obs_dict, f)
