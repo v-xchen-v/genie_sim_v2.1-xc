@@ -646,7 +646,7 @@ class CogActPolicy(BasePolicy):
             ],
             task_description=obs_dict["task_description"],
             robot_status=obs_dict["robot_state"],
-            url="http://10.190.172.212:6020/api/inference",  # Example URL, change as needed
+            url="http://10.190.172.212:7010/api/inference",  # Example URL, change as needed
         )
 
         # action_raw["ROBOT_LEFT_TRANS"] = translation_sum(action_raw["ROBOT_LEFT_TRANS"]).reshape(1, 3)
@@ -655,6 +655,8 @@ class CogActPolicy(BasePolicy):
         # action_raw["ROBOT_RIGHT_ROT_EULER"] = rotation_sum(action_raw["ROBOT_RIGHT_ROT_EULER"]).reshape(1, 3)
         # action_raw["ROBOT_LEFT_GRIPPER"] = action_raw["ROBOT_LEFT_GRIPPER"][:1]
         # action_raw["ROBOT_RIGHT_GRIPPER"] = action_raw["ROBOT_RIGHT_GRIPPER"][:1]
+        print(action_raw["ROBOT_RIGHT_TRANS"][:8])
+        print(action_raw["ROBOT_RIGHT_GRIPPER"])
 
         # TODO: put the logging logic into a separate function
         # Quickly hard-code log the action_raw for debugging

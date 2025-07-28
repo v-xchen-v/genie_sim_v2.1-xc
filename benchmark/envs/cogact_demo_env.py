@@ -189,20 +189,80 @@ class CogActDemoEnv(DemoEnv):
 
         # move gripper
         right_gripper_action = actions["ROBOT_RIGHT_GRIPPER"][0]
+        # right_gripper_action = 0
         if right_gripper_action > 0.5:
-            right_gripper_action = "open"
-            self.robot.set_gripper_action(right_gripper_action, arm="right")
+            # right_gripper_action = "open"
+            # self.robot.set_gripper_action(right_gripper_action, arm="right")
+            # self.robot.open_gripper("right")
+            self._operate_gripper("right", right_gripper_action)
         else:
-            right_gripper_action = "close"
-            self.robot.set_gripper_action(right_gripper_action, arm="right")
+            # right_gripper_action = "close"
+            # self.robot.set_gripper_action(right_gripper_action, arm="right")
+            # self.robot.close_gripper("right")
+            logger.logger.info("Close gripper")
+            self._operate_gripper("right", right_gripper_action)
 
         left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
         if left_gripper_action > 0.5:
-            left_gripper_action = "open"
-            self.robot.set_gripper_action(left_gripper_action, arm="left")
+            # left_gripper_action = "open"
+            # self.robot.set_gripper_action(left_gripper_action, arm="left")
+            # self.robot.open_gripper("left")
+            self._operate_gripper("left", right_gripper_action)
         else:
-            left_gripper_action = "close"
-            self.robot.set_gripper_action(left_gripper_action, arm="left")
+            # left_gripper_action = "close"
+            # self.robot.set_gripper_action(left_gripper_action, arm="left")
+            # self.robot.close_gripper("left")
+            self._operate_gripper("left", right_gripper_action)
+
+    def _operate_gripper(self, type: str, gripper_value):
+        """    def set_init_pose(self, init_pose):
+        target_joint_position = []
+        target_joint_indices = []
+        for idx, val in enumerate(init_pose):
+            if val is None:
+                continue
+            if not np.isfinite(val):
+                continue
+            target_joint_position.append(val)
+            target_joint_indices.append(idx)
+        self.client.set_joint_positions(
+            target_joint_position,
+            is_trajectory=False,
+            joint_indices=target_joint_indices,
+        )"""
+        """        msg_remap.position.append(joint_name_state_dict["idx21_arm_l_joint1"])
+        msg_remap.position.append(joint_name_state_dict["idx22_arm_l_joint2"])
+        msg_remap.position.append(joint_name_state_dict["idx23_arm_l_joint3"])
+        msg_remap.position.append(joint_name_state_dict["idx24_arm_l_joint4"])
+        msg_remap.position.append(joint_name_state_dict["idx25_arm_l_joint5"])
+        msg_remap.position.append(joint_name_state_dict["idx26_arm_l_joint6"])
+        msg_remap.position.append(joint_name_state_dict["idx27_arm_l_joint7"])
+        left_gripper_pos = min(1, max(0.0, (0.8 - (joint_name_state_dict["idx41_gripper_l_outer_joint1"]))))
+        msg_remap.position.append(left_gripper_pos)
+
+        msg_remap.position.append(joint_name_state_dict["idx61_arm_r_joint1"])
+        msg_remap.position.append(joint_name_state_dict["idx62_arm_r_joint2"])
+        msg_remap.position.append(joint_name_state_dict["idx63_arm_r_joint3"])
+        msg_remap.position.append(joint_name_state_dict["idx64_arm_r_joint4"])
+        msg_remap.position.append(joint_name_state_dict["idx65_arm_r_joint5"])
+        msg_remap.position.append(joint_name_state_dict["idx66_arm_r_joint6"])
+        msg_remap.position.append(joint_name_state_dict["idx67_arm_r_joint7"])
+        right_gripper_pos = min(1, max(0.0, (0.8 - (joint_name_state_dict["idx81_gripper_r_outer_joint1"]))))
+        msg_remap.position.append(right_gripper_pos)"""
+        for idx, name in enumerate(self.robot.joint_names):
+            if name == "idx41_gripper_l_outer_joint1":
+                left_gripper_joint_idx = idx
+            if name == "idx81_gripper_r_outer_joint1":
+                right_gripper_joint_idx = idx
+
+        gripper_pos = min(0.8, max(0.0, gripper_value))
+        gripper_joint_idx = 19 if type == "left" else 21
+
+        self.robot.client.set_joint_positions(
+            target_joint_position=[gripper_pos],
+            is_trajectory=False,
+            joint_indices=[gripper_joint_idx],
+        )
 
     def _get_per_step_actions(self, actions, step_id):
         """
