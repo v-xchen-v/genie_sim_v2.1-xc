@@ -13,8 +13,9 @@ else
     echo "using SIM_ASSETS='$SIM_ASSETS'"
 fi
 
+export XAUTHORITY=/home/yaobo/.Xauthority
 xhost +
-docker run -itd --name genie_sim_benchmark \
+docker run -itd --name genie_sim_benchmark_v2.1 \
     --entrypoint ./scripts/entrypoint.sh \
     --gpus all \
     --rm \
@@ -25,14 +26,14 @@ docker run -itd --name genie_sim_benchmark \
     -e "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python" \
     -e DISPLAY \
     -v $HOME/.Xauthority:/root/.Xauthority \
-    -v ~/docker/isaac-sim/cache/kit:/isaac-sim/kit/cache:rw \
-    -v ~/docker/isaac-sim/cache/ov:/root/.cache/ov:rw \
-    -v ~/docker/isaac-sim/cache/pip:/root/.cache/pip:rw \
-    -v ~/docker/isaac-sim/cache/glcache:/root/.cache/nvidia/GLCache:rw \
-    -v ~/docker/isaac-sim/cache/computecache:/root/.nv/ComputeCache:rw \
-    -v ~/docker/isaac-sim/logs:/root/.nvidia-omniverse/logs:rw \
-    -v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
-    -v ~/docker/isaac-sim/documents:/root/Documents:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/cache/kit:/isaac-sim/kit/cache:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/cache/ov:/root/.cache/ov:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/cache/pip:/root/.cache/pip:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/cache/glcache:/root/.cache/nvidia/GLCache:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/cache/computecache:/root/.nv/ComputeCache:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/logs:/root/.nvidia-omniverse/logs:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/data:/root/.local/share/ov/data:rw \
+    -v ~/docker/genie_sim_benchmark_v2.1/isaac-sim/documents:/root/Documents:rw \
     -v /dev/input:/dev/input:rw \
     -v $SIM_ASSETS:/root/assets:rw \
     -v $CURRENT_DIR:/root/workspace/main:rw \

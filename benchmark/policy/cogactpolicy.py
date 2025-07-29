@@ -23,7 +23,7 @@ os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
 LOG_MODEL_OUTPUT = False
 LOG_OBS = True
-
+_log_dir_registry = {}
 
 def translation_sum(trans):
     return np.array(trans).sum(axis=0)
@@ -590,6 +590,26 @@ class CogActPolicy(BasePolicy):
         img = Image.fromarray(padded)
         img = img.resize(target_size, Image.LANCZOS)
         return np.array(img)
+    
+    def _get_unique_log_dir(self, base_dir, task_name):
+        """
+        base_dir/
+        └── task_name/
+            ├── iter_1/
+            ├── iter_2/
+            └── ...
+            """
+        task_base_dir = os.path.join(base_dir, task_name)
+        os.makedirs(task_base_dir, exist_ok=True)
+
+        i = 1
+        while True:
+            iter_log_dir = os.path.join(task_base_dir, f"iter_{i}")
+            if not os.path.exists(iter_log_dir):
+                os.makedirs(iter_log_dir)
+                return iter_log_dir
+            i += 1
+
 
     def act(self, observations, **kwargs):
         # At First, got all required observations for CogAct, includes:
@@ -666,10 +686,11 @@ class CogActPolicy(BasePolicy):
             import time
             import pickle
 
-            task_log_dir = os.path.join(log_dir, self.task_name)
-            if os.path.exists(task_log_dir):
-                task_log_dir = task_log_dir + "iter_{}"
-            os.makedirs(task_log_dir, exist_ok=True)
+            if (log_dir, self.task_name) in _log_dir_registry:
+                task_log_dir = _log_dir_registry[(log_dir, self.task_name)]
+            else:
+                task_log_dir = self._get_unique_log_dir(log_dir, self.task_name)
+                _log_dir_registry[(log_dir, self.task_name)] = task_log_dir
             # Use timestamp or step_id as filename
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             if LOG_MODEL_OUTPUT:
