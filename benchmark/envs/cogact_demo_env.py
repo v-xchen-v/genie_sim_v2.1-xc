@@ -286,13 +286,13 @@ class CogActDemoEnv(DemoEnv):
         self.current_step += 1
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
-        execute_K = min(2, action_len)
-        execute_step_N = 4
+        execute_K = min(1, action_len)
+        execute_step_N = 1
         for execute_step_id in range(execute_K):
             is_first_or_last = execute_step_id == 0 or execute_step_id == execute_K - 1
             is_last = execute_step_id == execute_K - 1
             is_selected_step = (execute_step_id + 1) % execute_step_N == 0
-            if not is_last and not is_selected_step:
+            if not is_first_or_last and not is_selected_step:
                 continue
 
             self._robot_move(self._get_per_step_actions(actions, execute_step_id))

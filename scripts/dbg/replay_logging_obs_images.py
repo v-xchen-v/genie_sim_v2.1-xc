@@ -10,13 +10,14 @@ from tqdm import tqdm
 # task_name = "iros_clear_table_in_the_restaurant"
 # task_name = "iros_restock_supermarket_items"
 # task_name = "iros_stamp_the_seal"
-task_name = "iros_pack_moving_objects_from_conveyor"
-# task_name = "iros_clear_the_countertop_waste"
+# task_name = "iros_pack_moving_objects_from_conveyor"
+task_name = "iros_clear_the_countertop_waste"
+EXP_ID="port_7010"
 LOG_DIR = (
-    f"/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/{task_name}"
+    f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}"
 )
-VIDEO_OUTPUT = f"/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/{task_name}/stacked_view_video.mp4"
-N = None  # Use first N files sorted by timestamp
+VIDEO_OUTPUT = f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}/stacked_view_video.mp4"
+N = 100  # Use first N files sorted by timestamp
 from datetime import datetime
 
 
@@ -67,6 +68,8 @@ def collect_sorted_pkl_files(log_dir, n=None):
     pkl_files.sort(key=lambda x: extract_timestamp(os.path.basename(x)))
     if n is None:
         n = len(pkl_files)
+    elif n > len(pkl_files):
+        n = len(pkl_files)    
     return pkl_files[:n]
 
 

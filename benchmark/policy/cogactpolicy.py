@@ -17,7 +17,8 @@ from base_utils.logger import Logger
 
 logger = Logger()  # Create singleton instance
 # Optional: create a directory to store the logs
-log_dir = "action_logs"
+MODEL_PORT = 7010
+log_dir = f"action_logs/port_{MODEL_PORT}"
 os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
 LOG_MODEL_OUTPUT = False
@@ -646,7 +647,7 @@ class CogActPolicy(BasePolicy):
             ],
             task_description=obs_dict["task_description"],
             robot_status=obs_dict["robot_state"],
-            url="http://10.190.172.212:7010/api/inference",  # Example URL, change as needed
+            url=f"http://10.190.172.212:{MODEL_PORT}/api/inference",  # Example URL, change as needed
         )
 
         # action_raw["ROBOT_LEFT_TRANS"] = translation_sum(action_raw["ROBOT_LEFT_TRANS"]).reshape(1, 3)
@@ -666,6 +667,8 @@ class CogActPolicy(BasePolicy):
             import pickle
 
             task_log_dir = os.path.join(log_dir, self.task_name)
+            if os.path.exists(task_log_dir):
+                task_log_dir = task_log_dir + "iter_{}"
             os.makedirs(task_log_dir, exist_ok=True)
             # Use timestamp or step_id as filename
             timestamp = time.strftime("%Y%m%d_%H%M%S")
