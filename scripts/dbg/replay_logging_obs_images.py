@@ -10,15 +10,28 @@ from tqdm import tqdm
 # task_name = "iros_clear_table_in_the_restaurant"
 # task_name = "iros_restock_supermarket_items"
 # task_name = "iros_stamp_the_seal"
-task_name = "iros_pack_moving_objects_from_conveyor"
-# task_name = "iros_clear_the_countertop_waste"
-LOG_DIR = (
-    f"/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/{task_name}"
+# task_name = "iros_pack_moving_objects_from_conveyor"
+task_name = "iros_clear_the_countertop_waste"
+EXP_ID="port_7010"
+BASE_LOG_DIR = (
+    f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}"
 )
-VIDEO_OUTPUT = f"/home/xichen6/Documents/repos/genie_sim_v2.1/genie_sim/action_logs/{task_name}/stacked_view_video.mp4"
-N = None  # Use first N files sorted by timestamp
+VIDEO_ROOT = BASE_LOG_DIR.replace("action_logs", "replay_logs_video")  # you can also set manually
+VIDEO_FILENAME = "stacked_view_video.mp4"
+VIDEO_OUTPUT = f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}/stacked_view_video.mp4"
+N = 100  # Use first N files sorted by timestamp
+REMOVE_PKL_AFTER_VIDEO=True
 from datetime import datetime
 
+def find_all_iter_dirs(base_dir):
+    return sorted(
+        [
+            os.path.join(base_dir, d)
+            for d in os.listdir(base_dir)
+            if os.path.isdir(os.path.join(base_dir, d)) and d.startswith("iter_")
+        ],
+        key=lambda d: int(os.path.basename(d).split("_")[1])
+    )
 
 # -------- UTILITY FUNCTIONS --------
 def extract_timestamp(filename):
@@ -67,6 +80,8 @@ def collect_sorted_pkl_files(log_dir, n=None):
     pkl_files.sort(key=lambda x: extract_timestamp(os.path.basename(x)))
     if n is None:
         n = len(pkl_files)
+    elif n > len(pkl_files):
+        n = len(pkl_files)    
     return pkl_files[:n]
 
 
@@ -91,8 +106,23 @@ def make_video_from_pkl(pkl_files, output_path):
 
 # -------- RUN --------
 if __name__ == "__main__":
-    pkl_files = collect_sorted_pkl_files(LOG_DIR, N)
-    if pkl_files:
-        make_video_from_pkl(pkl_files, VIDEO_OUTPUT)
-    else:
-        print("No observation files found.")
+    iter_dirs = find_all_iter_dirs(BASE_LOG_DIR)
+    if not iter_dirs:
+        print(f"No iter_x folders found in {BASE_LOG_DIR}")
+        exit(1)
+
+    for iter_dir in iter_dirs:
+        # Mirror output dir path
+        video_output_dir = iter_dir.replace(BASE_LOG_DIR, VIDEO_ROOT)
+        os.makedirs(video_output_dir, exist_ok=True)
+        output_path = os.path.join(iter_dir, VIDEO_FILENAME)
+        if os.path.exists(output_path):
+            print(f"Skipping {iter_dir} (video already exists)")
+            continue
+
+        print(f"Processing {iter_dir}")
+        pkl_files = collect_sorted_pkl_files(iter_dir, N)
+        if pkl_files:
+            make_video_from_pkl(pkl_files, output_path)
+        else:
+            print("No observation files found.")

@@ -5,7 +5,7 @@
                 {
                     "ActionSetWaitAny": [
                         {
-                            "Timeout": 2000
+                            "Timeout": 500
                         }
                     ]
                 }

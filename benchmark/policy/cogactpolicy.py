@@ -17,12 +17,13 @@ from base_utils.logger import Logger
 
 logger = Logger()  # Create singleton instance
 # Optional: create a directory to store the logs
-log_dir = "action_logs"
+MODEL_PORT = 7010
+log_dir = f"action_logs/port_{MODEL_PORT}"
 os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
 LOG_MODEL_OUTPUT = False
 LOG_OBS = True
-
+_log_dir_registry = {}
 
 def translation_sum(trans):
     return np.array(trans).sum(axis=0)
@@ -589,6 +590,26 @@ class CogActPolicy(BasePolicy):
         img = Image.fromarray(padded)
         img = img.resize(target_size, Image.LANCZOS)
         return np.array(img)
+    
+    def _get_unique_log_dir(self, base_dir, task_name):
+        """
+        base_dir/
+        └── task_name/
+            ├── iter_1/
+            ├── iter_2/
+            └── ...
+            """
+        task_base_dir = os.path.join(base_dir, task_name)
+        os.makedirs(task_base_dir, exist_ok=True)
+
+        i = 1
+        while True:
+            iter_log_dir = os.path.join(task_base_dir, f"iter_{i}")
+            if not os.path.exists(iter_log_dir):
+                os.makedirs(iter_log_dir)
+                return iter_log_dir
+            i += 1
+
 
     def act(self, observations, **kwargs):
         # At First, got all required observations for CogAct, includes:
@@ -646,7 +667,7 @@ class CogActPolicy(BasePolicy):
             ],
             task_description=obs_dict["task_description"],
             robot_status=obs_dict["robot_state"],
-            url="http://10.190.172.212:6020/api/inference",  # Example URL, change as needed
+            url=f"http://10.190.172.212:{MODEL_PORT}/api/inference",  # Example URL, change as needed
         )
 
         # action_raw["ROBOT_LEFT_TRANS"] = translation_sum(action_raw["ROBOT_LEFT_TRANS"]).reshape(1, 3)
@@ -655,6 +676,8 @@ class CogActPolicy(BasePolicy):
         # action_raw["ROBOT_RIGHT_ROT_EULER"] = rotation_sum(action_raw["ROBOT_RIGHT_ROT_EULER"]).reshape(1, 3)
         # action_raw["ROBOT_LEFT_GRIPPER"] = action_raw["ROBOT_LEFT_GRIPPER"][:1]
         # action_raw["ROBOT_RIGHT_GRIPPER"] = action_raw["ROBOT_RIGHT_GRIPPER"][:1]
+        print(action_raw["ROBOT_RIGHT_TRANS"][:8])
+        print(action_raw["ROBOT_RIGHT_GRIPPER"])
 
         # TODO: put the logging logic into a separate function
         # Quickly hard-code log the action_raw for debugging
@@ -663,8 +686,11 @@ class CogActPolicy(BasePolicy):
             import time
             import pickle
 
-            task_log_dir = os.path.join(log_dir, self.task_name)
-            os.makedirs(task_log_dir, exist_ok=True)
+            if (log_dir, self.task_name) in _log_dir_registry:
+                task_log_dir = _log_dir_registry[(log_dir, self.task_name)]
+            else:
+                task_log_dir = self._get_unique_log_dir(log_dir, self.task_name)
+                _log_dir_registry[(log_dir, self.task_name)] = task_log_dir
             # Use timestamp or step_id as filename
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             if LOG_MODEL_OUTPUT:
