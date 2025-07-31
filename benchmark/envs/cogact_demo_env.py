@@ -255,7 +255,12 @@ class CogActDemoEnv(DemoEnv):
             if name == "idx81_gripper_r_outer_joint1":
                 right_gripper_joint_idx = idx
 
-        gripper_pos = min(0.8, max(0.0, gripper_value))
+        # gripper_pos = min(0.8, max(0.0, gripper_value))
+        if gripper_value > 0.5:
+            gripper_pos = 0.8
+        else:
+            gripper_pos = 0
+        print(f"{type} gripper: {gripper_value}")
         gripper_joint_idx = 19 if type == "left" else 21
 
         self.robot.client.set_joint_positions(
