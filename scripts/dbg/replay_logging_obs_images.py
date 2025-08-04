@@ -8,11 +8,11 @@ from tqdm import tqdm
 # -------- CONFIG --------
 # task_name = "iros_make_a_sandwich"
 # task_name = "iros_clear_table_in_the_restaurant"
-# task_name = "iros_restock_supermarket_items"
+task_name = "iros_restock_supermarket_items"
 # task_name = "iros_stamp_the_seal"
 # task_name = "iros_pack_moving_objects_from_conveyor"
-task_name = "iros_clear_the_countertop_waste"
-EXP_ID="port_7010"
+# task_name = "iros_clear_the_countertop_waste"
+EXP_ID="port_12020"
 BASE_LOG_DIR = (
     f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}"
 )
@@ -115,7 +115,7 @@ if __name__ == "__main__":
         # Mirror output dir path
         video_output_dir = iter_dir.replace(BASE_LOG_DIR, VIDEO_ROOT)
         os.makedirs(video_output_dir, exist_ok=True)
-        output_path = os.path.join(iter_dir, VIDEO_FILENAME)
+        output_path = os.path.join(video_output_dir, VIDEO_FILENAME)
         if os.path.exists(output_path):
             print(f"Skipping {iter_dir} (video already exists)")
             continue
