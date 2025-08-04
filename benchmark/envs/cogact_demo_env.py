@@ -53,10 +53,13 @@ class CogActDemoEnv(DemoEnv):
         # init task_file
         self.load(task_file)
         self.load_task_setup()
-        self.gripper_operation_enabled = True  # Enable gripper operation by default
-        self.gripper_operated_count = 0  # Count how many times the gripper has been operated
-        self.gripper_operated_threshold = 16 # After how many executions the gripper will be enable to operate again
-        
+        self.right_gripper_close_enabled = True  # Enable gripper operation by default
+        self.right_gripper_closed_count = 0  # Count how many times the gripper has been operated
+        self.right_gripper_closed_threshold = 16 # After how many executions the gripper will be enable to operate again
+        self.left_gripper_close_enabled = True  # Enable gripper operation by default
+        self.left_gripper_closed_count = 0  # Count how many times the gripper has been operated
+        self.left_gripper_closed_threshold = 16 # After how many executions the gripper will be enable to operate again
+
     def get_observation(self):
         """
         # Example
@@ -226,22 +229,19 @@ class CogActDemoEnv(DemoEnv):
 
     def _robot_move(self, actions):
         # handle gripper close/open enable flag
-        if self.gripper_operated_count >= self.gripper_operated_threshold:
-            self.gripper_operated_count = 0  # Reset count after threshold is reached
+        if not self.right_gripper_close_enabled and self.right_gripper_closed_count >= self.right_gripper_closed_threshold:
+            self.right_gripper_close_enabled = True
             logger.logger.info(
-                f"Gripper operation count reset to {self.gripper_operated_count}."
+                f"Right gripper operation reset enabled."
             )
-        if self.gripper_operated_count == 0:
-            self.gripper_operation_enabled = True
+        self.right_gripper_closed_count += 1
+        
+        if not self.left_gripper_close_enabled and self.left_gripper_closed_count >= self.left_gripper_closed_threshold:
+            self.left_gripper_close_enabled = True
             logger.logger.info(
-                f"Gripper operation enabled after {self.gripper_operated_threshold} steps."
+                f"Left gripper operation reset enabled."
             )
-        else:
-            self.gripper_operation_enabled = False
-            logger.logger.info(
-                f"Gripper operation disabled, operated count: {self.gripper_operated_count}"
-            )
-        self.gripper_operated_count += 1
+        self.left_gripper_closed_count += 1
 
         move_type = (
             "Normal"  # "Normal", "AvoidObs" # Normal is much more fast than AvoidObs
@@ -266,36 +266,46 @@ class CogActDemoEnv(DemoEnv):
             target_left_ee_pose, type=move_type, arm="left", block=True
         )
         
-        if not self.gripper_operation_enabled:
-            logger.logger.warning("Gripper operation is currently disabled.")
-            return
+       
+        # move gripper
+        right_gripper_action = actions["ROBOT_RIGHT_GRIPPER"][0]
+        # right_gripper_action = 0
+        if right_gripper_action > 0.5:
+            # right_gripper_action = "open"
+            # self.robot.set_gripper_action(right_gripper_action, arm="right")
+            # self.robot.open_gripper("right")
+            self._operate_gripper("right", right_gripper_action)
         else:
-            # move gripper
-            right_gripper_action = actions["ROBOT_RIGHT_GRIPPER"][0]
-            # right_gripper_action = 0
-            if right_gripper_action > 0.5:
-                # right_gripper_action = "open"
-                # self.robot.set_gripper_action(right_gripper_action, arm="right")
-                # self.robot.open_gripper("right")
-                self._operate_gripper("right", right_gripper_action)
+            if not self.right_gripper_close_enabled:
+                logger.logger.warning("[RIGHT] Gripper operation is currently disabled.")
+                return
             else:
                 # right_gripper_action = "close"
                 # self.robot.set_gripper_action(right_gripper_action, arm="right")
                 # self.robot.close_gripper("right")
-                logger.logger.info("Close gripper")
+                logger.logger.info("Close right gripper")
                 self._operate_gripper("right", right_gripper_action)
+                self.right_gripper_close_enabled = False
+                self.right_gripper_closed_count = 0  # Reset count after operation
 
-            left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
-            if left_gripper_action > 0.5:
-                # left_gripper_action = "open"
-                # self.robot.set_gripper_action(left_gripper_action, arm="left")
-                # self.robot.open_gripper("left")
-                self._operate_gripper("left", right_gripper_action)
+        left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
+        if left_gripper_action > 0.5:
+            # left_gripper_action = "open"
+            # self.robot.set_gripper_action(left_gripper_action, arm="left")
+            # self.robot.open_gripper("left")
+            self._operate_gripper("left", right_gripper_action)
+        else:
+            if not self.left_gripper_close_enabled:
+                logger.logger.warning("[LEFT] Gripper operation is currently disabled.")
+                return
             else:
                 # left_gripper_action = "close"
                 # self.robot.set_gripper_action(left_gripper_action, arm="left")
                 # self.robot.close_gripper("left")
+                logger.logger.info("Close left gripper")
                 self._operate_gripper("left", right_gripper_action)
+                self.left_gripper_close_enabled = False
+                self.left_gripper_closed_count = 0  # Reset count after operation
 
     def _operate_gripper(self, gripper_type: str, gripper_value):
         """    def set_init_pose(self, init_pose):
