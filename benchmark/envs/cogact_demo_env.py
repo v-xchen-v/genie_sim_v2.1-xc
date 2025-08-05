@@ -53,13 +53,13 @@ class CogActDemoEnv(DemoEnv):
         # init task_file
         self.load(task_file)
         self.load_task_setup()
+
         self.right_gripper_close_enabled = True  # Enable gripper operation by default
         self.right_gripper_closed_count = 0  # Count how many times the gripper has been operated
-        self.right_gripper_closed_threshold = 16 # After how many executions the gripper will be enable to operate again
+        self.right_gripper_closed_threshold = 2 # After how many executions the gripper will be enable to operate again
         self.left_gripper_close_enabled = True  # Enable gripper operation by default
         self.left_gripper_closed_count = 0  # Count how many times the gripper has been operated
-        self.left_gripper_closed_threshold = 16 # After how many executions the gripper will be enable to operate again
-
+        self.left_gripper_closed_threshold = 2 # After how many executions the gripper will be enable to operate again
         
         # hardcode the minimal gripper close position per task
         self.min_gripper_close_pos = {
