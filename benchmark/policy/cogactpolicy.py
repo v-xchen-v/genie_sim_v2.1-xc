@@ -753,7 +753,9 @@ class CogActPolicy(BasePolicy):
             logger.logger.info(f"Current instruction: {self._obs_instruction(self.curr_task_substep_index)}")
             action_dict = self.act(observations=observations, **kwargs)
             return action_dict
-        logger.logger.info(f"------------- Progress: {task_substep_progress[0][0]}--------------")
+        
+        logger.logger.info(f"---Substep: {self.curr_task_substep_index} ---")
+        logger.logger.info(f"---Progress: {task_substep_progress[0][0]}---")
         
         return action_dict
 
