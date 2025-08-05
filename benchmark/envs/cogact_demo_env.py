@@ -457,7 +457,7 @@ class CogActDemoEnv(DemoEnv):
         self.current_step += 1
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
-        execute_K = min(4, action_len)
+        execute_K = min(2, action_len)
         execute_step_N = 1
         for execute_step_id in range(execute_K):
             is_first_or_last = execute_step_id == 0 or execute_step_id == execute_K - 1
