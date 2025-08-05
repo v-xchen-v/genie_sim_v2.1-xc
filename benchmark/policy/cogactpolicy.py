@@ -17,7 +17,7 @@ from base_utils.logger import Logger
 
 logger = Logger()  # Create singleton instance
 # Optional: create a directory to store the logs
-MODEL_PORT = 7010
+MODEL_PORT = 12021
 log_dir = f"action_logs/port_{MODEL_PORT}"
 os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
@@ -87,6 +87,8 @@ class CogActPolicy(BasePolicy):
         #         break
         #     time.sleep(0.5)
         time.sleep(SIM_INIT_TIME)
+        self.curr_task_substep_index = 0
+        self.TASK_SUBSTEP_PROGRESS_THRESHOLD = 0.95  # threshold to switch to next substep
 
     # def reset(self):
     #     target_position = [
@@ -258,14 +260,14 @@ class CogActPolicy(BasePolicy):
         # and first 1 have the first split, second 1 have the second split jointed and so on
         if len(subinstruction) == 0:
             raise ValueError("Instruction is empty or only contains semicolons.")
-        if len(subinstruction) == 1:
-            return subinstruction[0]
+        # if len(subinstruction) == 1:
+        #     return subinstruction[0]
         # Join the first two actions and return the rest as is
-        for i in range(1, len(subinstruction)):
-            subinstruction[i] = subinstruction[i - 1] + ";" + subinstruction[i]
+        # for i in range(1, len(subinstruction)):
+        #     subinstruction[i] = subinstruction[i - 1] + ";" + subinstruction[i]
         return subinstruction
 
-    def _obs_instruction(self):
+    def _obs_instruction(self, substep_index=0):
         lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
         if self.task_name == "iros_clear_the_countertop_waste":
             lang = "Pick up the yellow functional beverage can on the table with the left arm.;Threw the yellow functional beverage can into the trash can with the left arm.;Pick up the green carbonated beverage can on the table with the right arm.;Threw the green carbonated beverage can into the trash can with the right arm."
@@ -297,8 +299,12 @@ class CogActPolicy(BasePolicy):
         # instruction = (
         #     "Pick up the plate containing pasta on the table with the right arm."
         # )
-        instruction = self._split_instruction(lang)[
-            0
+        instruction_splits = self._split_instruction(lang)
+        
+        if substep_index >= len(instruction_splits):
+            return instruction_splits[-1]  # Return the last instruction if index exceeds
+        instruction = instruction_splits[
+            substep_index
         ]  # Hardcoded for now, handle by model later
         return instruction
 
@@ -625,7 +631,7 @@ class CogActPolicy(BasePolicy):
         right_wrist_cam_rgb_image = self._obs_right_wrist_cam_rgb_image(observations)
 
         # instruction
-        instruction = self._obs_instruction()
+        instruction = self._obs_instruction(self.curr_task_substep_index)
 
         # robot current state in camera coordinate
         robot_ee_left_translation_in_head_cam = (
@@ -678,6 +684,7 @@ class CogActPolicy(BasePolicy):
         # action_raw["ROBOT_RIGHT_GRIPPER"] = action_raw["ROBOT_RIGHT_GRIPPER"][:1]
         print(action_raw["ROBOT_RIGHT_TRANS"][:8])
         print(action_raw["ROBOT_RIGHT_GRIPPER"])
+        print(action_raw["PROGRESS"])
 
         # TODO: put the logging logic into a separate function
         # Quickly hard-code log the action_raw for debugging
@@ -727,6 +734,7 @@ class CogActPolicy(BasePolicy):
         action_ee_right_pose_in_world = self._action_ee_right_T(
             action_raw, observations
         )
+        task_substep_progress = self._action_task_substep_progress(action_raw)
         action_dict = {
             "ROBOT_LEFT_POSE_IN_HEAD_CAM": action_ee_left_pose_in_sim_head_cam,
             "ROBOT_RIGHT_POSE_IN_HEAD_CAM": action_ee_right_pose_in_sim_head_cam,
@@ -734,8 +742,21 @@ class CogActPolicy(BasePolicy):
             "ROBOT_RIGHT_GRIPPER": action_ee_right_gripper,
             "ROBOT_LEFT_POSE_IN_WORLD": action_ee_left_pose_in_world,
             "ROBOT_RIGHT_POSE_IN_WORLD": action_ee_right_pose_in_world,
+            "PROGRESS": task_substep_progress,
         }
 
+        # Check if the task substep progress of first step of the action is greater than the threshold
+        if task_substep_progress[0][0] > self.TASK_SUBSTEP_PROGRESS_THRESHOLD:
+            # if the task substep progress is greater than the threshold, we consider it as a valid action
+            self.curr_task_substep_index += 1
+            logger.logger.info(f"=============Switch to next substep: {self.curr_task_substep_index}=============")
+            logger.logger.info(f"Current instruction: {self._obs_instruction(self.curr_task_substep_index)}")
+            action_dict = self.act(observations=observations, **kwargs)
+            return action_dict
+        
+        logger.logger.info(f"---Substep: {self.curr_task_substep_index} ---")
+        logger.logger.info(f"---Progress: {task_substep_progress[0][0]}---")
+        
         return action_dict
 
     def _action_gripper_left(self, action_raw):
@@ -743,6 +764,12 @@ class CogActPolicy(BasePolicy):
 
     def _action_gripper_right(self, action_raw):
         return action_raw["ROBOT_RIGHT_GRIPPER"]
+    
+    def _action_task_substep_progress(self, action_raw):
+        """
+        Get the task substep progress from the action raw.
+        """
+        return action_raw["PROGRESS"] # shape: []
 
     def _action_ee_left_rot_eular_xyz_in_real_head_cam(
         self,

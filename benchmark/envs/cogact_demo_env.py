@@ -60,6 +60,17 @@ class CogActDemoEnv(DemoEnv):
         self.left_gripper_closed_count = 0  # Count how many times the gripper has been operated
         self.left_gripper_closed_threshold = 16 # After how many executions the gripper will be enable to operate again
 
+        
+        # hardcode the minimal gripper close position per task
+        self.min_gripper_close_pos = {
+            "iros_make_a_sandwich": 0.0,
+            "iros_clear_table_in_the_restaurant": 0.0,
+            "iros_restock_supermarket_items": 0.30,
+            "iros_stamp_the_seal": 0.01,
+            "iros_pack_moving_objects_from_conveyor": 0.0,
+            "iros_clear_the_countertop_waste": 0.0,
+        }
+        
     def get_observation(self):
         """
         # Example
@@ -228,20 +239,6 @@ class CogActDemoEnv(DemoEnv):
         return ee_pose
 
     def _robot_move(self, actions):
-        # handle gripper close/open enable flag
-        if not self.right_gripper_close_enabled and self.right_gripper_closed_count >= self.right_gripper_closed_threshold:
-            self.right_gripper_close_enabled = True
-            logger.logger.info(
-                f"Right gripper operation reset enabled."
-            )
-        self.right_gripper_closed_count += 1
-        
-        if not self.left_gripper_close_enabled and self.left_gripper_closed_count >= self.left_gripper_closed_threshold:
-            self.left_gripper_close_enabled = True
-            logger.logger.info(
-                f"Left gripper operation reset enabled."
-            )
-        self.left_gripper_closed_count += 1
 
         move_type = (
             "Normal"  # "Normal", "AvoidObs" # Normal is much more fast than AvoidObs
@@ -265,8 +262,7 @@ class CogActDemoEnv(DemoEnv):
         self.robot.move_pose(
             target_left_ee_pose, type=move_type, arm="left", block=True
         )
-        
-       
+
         # move gripper
         right_gripper_action = actions["ROBOT_RIGHT_GRIPPER"][0]
         # right_gripper_action = 0
@@ -276,17 +272,11 @@ class CogActDemoEnv(DemoEnv):
             # self.robot.open_gripper("right")
             self._operate_gripper("right", right_gripper_action)
         else:
-            if not self.right_gripper_close_enabled:
-                logger.logger.warning("[RIGHT] Gripper operation is currently disabled.")
-                return
-            else:
-                # right_gripper_action = "close"
-                # self.robot.set_gripper_action(right_gripper_action, arm="right")
-                # self.robot.close_gripper("right")
-                logger.logger.info("Close right gripper")
-                self._operate_gripper("right", right_gripper_action)
-                self.right_gripper_close_enabled = False
-                self.right_gripper_closed_count = 0  # Reset count after operation
+            # right_gripper_action = "close"
+            # self.robot.set_gripper_action(right_gripper_action, arm="right")
+            # self.robot.close_gripper("right")
+            logger.logger.info("Close gripper")
+            self._operate_gripper("right", right_gripper_action)
 
         left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
         if left_gripper_action > 0.5:
@@ -295,20 +285,13 @@ class CogActDemoEnv(DemoEnv):
             # self.robot.open_gripper("left")
             self._operate_gripper("left", right_gripper_action)
         else:
-            if not self.left_gripper_close_enabled:
-                logger.logger.warning("[LEFT] Gripper operation is currently disabled.")
-                return
-            else:
-                # left_gripper_action = "close"
-                # self.robot.set_gripper_action(left_gripper_action, arm="left")
-                # self.robot.close_gripper("left")
-                logger.logger.info("Close left gripper")
-                self._operate_gripper("left", right_gripper_action)
-                self.left_gripper_close_enabled = False
-                self.left_gripper_closed_count = 0  # Reset count after operation
+            # left_gripper_action = "close"
+            # self.robot.set_gripper_action(left_gripper_action, arm="left")
+            # self.robot.close_gripper("left")
+            self._operate_gripper("left", right_gripper_action)
 
     def _operate_gripper(self, gripper_type: str, gripper_value):
-        """    def set_init_pose(self, init_pose):
+        """def set_init_pose(self, init_pose):
         target_joint_position = []
         target_joint_indices = []
         for idx, val in enumerate(init_pose):
@@ -350,7 +333,7 @@ class CogActDemoEnv(DemoEnv):
 
         # gripper_pos = min(0.8, max(0.0, gripper_value))
         if gripper_value > 0.5:
-            gripper_pos = 0.8 # open
+            gripper_pos = 0.8  # open
             print(f"{gripper_type} gripper: {gripper_value}")
             gripper_joint_idx = 19 if gripper_type == "left" else 21
 
@@ -360,8 +343,9 @@ class CogActDemoEnv(DemoEnv):
                 joint_indices=[gripper_joint_idx],
             )
         else:
-            gripper_pos = 0 # close
+            gripper_pos = 0  # close
             self._gentle_close_gripper(gripper_type)
+
     def _gentle_close_gripper(self, gripper_type: str):
         """
         Gently close the gripper to avoid damaging objects.
@@ -373,21 +357,25 @@ class CogActDemoEnv(DemoEnv):
 
         # Set a gentle close position delta, e.g., 0.1
         # This is to avoid damaging objects by closing too hard
-        gentle_close_position_delta = 0.1
+        gentle_close_position_delta = 0.005
         # Get the current position of the gripper
         cur_obs = self.get_observation()
-        current_position = cur_obs['joint'][list(cur_obs['joint'].keys())[gripper_joint_idx]]
+        current_position = cur_obs["joint"][
+            list(cur_obs["joint"].keys())[gripper_joint_idx]
+        ] - 0.01 # seems the gripper position is not accurate, so we need to subtract a small value
+        print(f"Current {gripper_type} gripper position: {current_position}")
+
         # Calculate the gentle close positions, each time close delta, end position should close to 0
         def generate_decreasing_range(current_value, min_value, delta):
             """
             Generate a NumPy array from current_value down to (and including) min_value,
             decreasing by delta each step.
-            
+
             Args:
                 current_value (float): Starting value.
                 min_value (float): Minimum value to reach.
                 delta (float): Step size (positive number).
-            
+
             Returns:
                 np.ndarray: Decreasing values from current_value to min_value.
             """
@@ -396,14 +384,20 @@ class CogActDemoEnv(DemoEnv):
 
             # np.arange excludes the endpoint, so we subtract a small epsilon to include min_value
             return np.arange(current_value, min_value - 1e-8, -delta)
-        gentle_closed_postion = 0.1  # Set a gentle close position, e.g., 0.01
-        if current_position > gentle_closed_postion:
+
+        # gentle_closed_postion = 0.1  # Set a gentle close position, e.g., 0.01
+        gentle_closed_position = self.min_gripper_close_pos.get(
+            self.specific_task_name, 0.01
+        )  # Default to 0.01 if not specified for the task
+        if current_position > gentle_closed_position:
             gentle_close_positions = generate_decreasing_range(
                 current_value=current_position,
-                min_value=gentle_closed_postion,
-                delta=gentle_close_position_delta
+                min_value=gentle_closed_position,
+                delta=gentle_close_position_delta,
             )
-            print(f"Gently closing {gripper_type} gripper in {len(gentle_close_positions)} steps from {current_position} to 0.01 with delta {gentle_close_position_delta}")
+            print(
+                f"Gently closing {gripper_type} gripper in {len(gentle_close_positions)} steps from {current_position} to {gentle_closed_position} with delta {gentle_close_position_delta}"
+            )
             for gripper_pos in gentle_close_positions:
                 # Set the gripper position
                 self.robot.client.set_joint_positions(
@@ -411,7 +405,7 @@ class CogActDemoEnv(DemoEnv):
                     is_trajectory=False,
                     joint_indices=[gripper_joint_idx],
                 )
-                time.sleep(0.05)
+                time.sleep(0.1)
                 print(f"{gripper_type} gripper gently closed to {gripper_pos}")
 
     def _get_per_step_actions(self, actions, step_id):
@@ -441,7 +435,6 @@ class CogActDemoEnv(DemoEnv):
         for execute_step_id in range(execute_K):
             is_first_or_last = execute_step_id == 0 or execute_step_id == execute_K - 1
             is_last = execute_step_id == execute_K - 1
-            is_first = execute_step_id == 0
             is_selected_step = (execute_step_id + 1) % execute_step_N == 0
             if not is_first_or_last and not is_selected_step:
                 continue
