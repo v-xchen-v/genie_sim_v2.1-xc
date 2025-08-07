@@ -298,24 +298,24 @@ class CogActDemoEnv(DemoEnv):
                 self.right_gripper_close_enabled = False
                 self.right_gripper_closed_count = 0  # Reset count after operation
                 
-        # left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
-        # if left_gripper_action > 0.5:
-        #     # left_gripper_action = "open"
-        #     # self.robot.set_gripper_action(left_gripper_action, arm="left")
-        #     # self.robot.open_gripper("left")
-        #     self._operate_gripper("left", right_gripper_action)
-        # else:
-        #     if not self.left_gripper_close_enabled:
-        #         logger.logger.warning("[LEFT] Gripper operation is currently disabled.")
-        #         return
-        #     else:
-        #         # left_gripper_action = "close"
-        #         # self.robot.set_gripper_action(left_gripper_action, arm="left")
-        #         # self.robot.close_gripper("left")
-        #         logger.logger.info("Close left gripper")
-        #         self._operate_gripper("left", right_gripper_action)
-        #         self.left_gripper_close_enabled = False
-        #         self.left_gripper_closed_count = 0  # Reset count after operation
+        left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
+        if left_gripper_action > 0.5:
+            # left_gripper_action = "open"
+            # self.robot.set_gripper_action(left_gripper_action, arm="left")
+            # self.robot.open_gripper("left")
+            self._operate_gripper("left", right_gripper_action)
+        else:
+            if not self.left_gripper_close_enabled:
+                logger.logger.warning("[LEFT] Gripper operation is currently disabled.")
+                return
+            else:
+                left_gripper_action = "close"
+                # self.robot.set_gripper_action(left_gripper_action, arm="left")
+                # self.robot.close_gripper("left")
+                logger.logger.info("Close left gripper")
+                self._operate_gripper("left", right_gripper_action)
+                self.left_gripper_close_enabled = False
+                self.left_gripper_closed_count = 0  # Reset count after operation
 
     def _operate_gripper(self, gripper_type: str, gripper_value):
         """def set_init_pose(self, init_pose):
@@ -359,7 +359,7 @@ class CogActDemoEnv(DemoEnv):
                 right_gripper_joint_idx = idx
 
         # gripper_pos = min(0.8, max(0.0, gripper_value))
-        if gripper_value > 0.5:
+        if gripper_value > 0.5 or gripper_type =="left":
             gripper_pos = 0.8  # open
             print(f"{gripper_type} gripper: {gripper_value}")
             gripper_joint_idx = 19 if gripper_type == "left" else 21
@@ -378,9 +378,7 @@ class CogActDemoEnv(DemoEnv):
                 min_motion=0.005,  # threshold to detect no movement (tuned to your gripper's solution)
                 step_time=0.1,  # time to wait between each moving and checking position
                 patience=3,  # how many times to allow no movement before treating as "forced stop" and exiting
-                max_close_value=self.min_gripper_close_pos.get(
-                    self.specific_task_name, 0.01
-                ),  # full-close command value (e.g., 0.0)
+                max_close_value=0.0# full-close command value (e.g., 0.0)
             )
             print(f"Done closing {gripper_type} gripper.")
 
@@ -414,7 +412,7 @@ class CogActDemoEnv(DemoEnv):
             if moved_delta < min_motion:
                 stable_count += 1
                 # repeat last command
-                current_cmd = current_pos + min_step
+                current_cmd = current_pos
                 print(f"{gripper_type} gripper position is stable: {current_pos}, stable_count: {stable_count}")
             else:
                 stable_count = 0  # reset if moved
@@ -550,7 +548,7 @@ class CogActDemoEnv(DemoEnv):
         self.current_step += 1
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
-        execute_K = min(2, action_len)
+        execute_K = min(1, action_len)
         execute_step_N = 1
         for execute_step_id in range(execute_K):
             is_first_or_last = execute_step_id == 0 or execute_step_id == execute_K - 1
