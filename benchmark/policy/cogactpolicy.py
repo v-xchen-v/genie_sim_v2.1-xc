@@ -17,13 +17,14 @@ from base_utils.logger import Logger
 
 logger = Logger()  # Create singleton instance
 # Optional: create a directory to store the logs
-MODEL_PORT = 12021
+MODEL_PORT = 13020
 log_dir = f"action_logs/port_{MODEL_PORT}"
 os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
 LOG_MODEL_OUTPUT = False
 LOG_OBS = True
 _log_dir_registry = {}
+
 
 def translation_sum(trans):
     return np.array(trans).sum(axis=0)
@@ -88,7 +89,9 @@ class CogActPolicy(BasePolicy):
         #     time.sleep(0.5)
         time.sleep(SIM_INIT_TIME)
         self.curr_task_substep_index = 0
-        self.TASK_SUBSTEP_PROGRESS_THRESHOLD = 0.95  # threshold to switch to next substep
+        self.TASK_SUBSTEP_PROGRESS_THRESHOLD = (
+            0.95  # threshold to switch to next substep
+        )
 
     # def reset(self):
     #     target_position = [
@@ -300,9 +303,11 @@ class CogActPolicy(BasePolicy):
         #     "Pick up the plate containing pasta on the table with the right arm."
         # )
         instruction_splits = self._split_instruction(lang)
-        
+
         if substep_index >= len(instruction_splits):
-            return instruction_splits[-1]  # Return the last instruction if index exceeds
+            return instruction_splits[
+                -1
+            ]  # Return the last instruction if index exceeds
         instruction = instruction_splits[
             substep_index
         ]  # Hardcoded for now, handle by model later
@@ -596,7 +601,7 @@ class CogActPolicy(BasePolicy):
         img = Image.fromarray(padded)
         img = img.resize(target_size, Image.LANCZOS)
         return np.array(img)
-    
+
     def _get_unique_log_dir(self, base_dir, task_name):
         """
         base_dir/
@@ -604,7 +609,7 @@ class CogActPolicy(BasePolicy):
             ├── iter_1/
             ├── iter_2/
             └── ...
-            """
+        """
         task_base_dir = os.path.join(base_dir, task_name)
         os.makedirs(task_base_dir, exist_ok=True)
 
@@ -615,7 +620,6 @@ class CogActPolicy(BasePolicy):
                 os.makedirs(iter_log_dir)
                 return iter_log_dir
             i += 1
-
 
     def act(self, observations, **kwargs):
         # At First, got all required observations for CogAct, includes:
@@ -749,14 +753,18 @@ class CogActPolicy(BasePolicy):
         if task_substep_progress[0][0] > self.TASK_SUBSTEP_PROGRESS_THRESHOLD:
             # if the task substep progress is greater than the threshold, we consider it as a valid action
             self.curr_task_substep_index += 1
-            logger.logger.info(f"=============Switch to next substep: {self.curr_task_substep_index}=============")
-            logger.logger.info(f"Current instruction: {self._obs_instruction(self.curr_task_substep_index)}")
+            logger.logger.info(
+                f"=============Switch to next substep: {self.curr_task_substep_index}============="
+            )
+            logger.logger.info(
+                f"Current instruction: {self._obs_instruction(self.curr_task_substep_index)}"
+            )
             action_dict = self.act(observations=observations, **kwargs)
             return action_dict
-        
+
         logger.logger.info(f"---Substep: {self.curr_task_substep_index} ---")
         logger.logger.info(f"---Progress: {task_substep_progress[0][0]}---")
-        
+
         return action_dict
 
     def _action_gripper_left(self, action_raw):
@@ -764,12 +772,12 @@ class CogActPolicy(BasePolicy):
 
     def _action_gripper_right(self, action_raw):
         return action_raw["ROBOT_RIGHT_GRIPPER"]
-    
+
     def _action_task_substep_progress(self, action_raw):
         """
         Get the task substep progress from the action raw.
         """
-        return action_raw["PROGRESS"] # shape: []
+        return action_raw["PROGRESS"]  # shape: []
 
     def _action_ee_left_rot_eular_xyz_in_real_head_cam(
         self,
