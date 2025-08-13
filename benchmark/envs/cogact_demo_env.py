@@ -294,6 +294,7 @@ class CogActDemoEnv(DemoEnv):
             left_gripper_action = actions["ROBOT_LEFT_GRIPPER"][0]
             self._operate_continuous_gripper("right", right_gripper_action)
             self._operate_continuous_gripper("left", left_gripper_action)
+            pass  # TODO: implement continuous gripper operation
         else:
             # move gripper
             right_gripper_action = actions["ROBOT_RIGHT_GRIPPER"][0]
@@ -348,43 +349,55 @@ class CogActDemoEnv(DemoEnv):
         if gripper_type not in ["left", "right"]:
             raise ValueError("gripper_type must be 'left' or 'right'")
 
-        # Check if the gripper value is within the valid range
-        if not (0 <= gripper_value <= 1):
-            raise ValueError("gripper_value must be between 0 and 1")
+        # # Check if the gripper value is within the valid range
+        # if not (0 <= gripper_value <= 1):
+        #     raise ValueError("gripper_value must be between 0 and 1")
 
-        # If the gripper is already at the desired position, do nothing
-        current_position = self._gripper_get_position(gripper_type)
-        if abs(current_position - gripper_value) < 0.01:  # Tolerance of 0.01
-            print(
-                f"{gripper_type} gripper is already at the desired position: {current_position}"
-            )
-            return
+        # # map the 0-1 gripper_value to gripper position with a ratio
+        # ratio = 120 / 70.0  # to make gripper close eailier
 
-        # map the 0-1 gripper_value to gripper position with a ratio
-        ratio = 120 / 70.0  # to make gripper close eailier
+        # # mapping gripper_value [0, 1] to position [0, 45*180/3.14] (0 to 45 degrees)
+        # gripper_value = min(
+        #     1, max(0.0, gripper_value)
+        # )  # Ensure gripper_value is between 0 and 1
+        # gripper_value_range = (0, 1)
+        # gripper_position_range = (0, 45 * 180 / 3.14)  # Convert degrees to radians
+        # gripper_joint_position = (gripper_value - gripper_value_range[0]) / (
+        #     gripper_value_range[1] - gripper_value_range[0]
+        # ) * (
+        #     gripper_position_range[1] - gripper_position_range[0]
+        # ) + gripper_position_range[
+        #     0
+        # ]
 
-        # mapping gripper_value [0, 1] to position [0, 45*180/3.14] (0 to 45 degrees)
-        gripper_value = min(
-            1, max(0.0, gripper_value)
-        )  # Ensure gripper_value is between 0 and 1
-        gripper_value_range = (0, 1)
-        gripper_position_range = (0, 45 * 180 / 3.14)  # Convert degrees to radians
-        gripper_joint_position = (gripper_value - gripper_value_range[0]) / (
-            gripper_value_range[1] - gripper_value_range[0]
-        ) * (
-            gripper_position_range[1] - gripper_position_range[0]
-        ) + gripper_position_range[
-            0
-        ]
+        # # Adjust the position based on the ratio
+        # if gripper_type == "left":
+        #     gripper_joint_position *= ratio  # Adjust for left gripper
+        # else:
+        #     gripper_joint_position *= ratio  # Adjust for right gripper
 
-        # Adjust the position based on the ratio
-        if gripper_type == "left":
-            gripper_joint_position *= ratio  # Adjust for left gripper
-        else:
-            gripper_joint_position *= ratio  # Adjust for right gripper
+        # gripper value 0.x is open, 1.x is closed
 
+        ratio = 1.2 / 0.78
+        # gripper_value = min(1, max(0.0, gripper_value))
+        gripper_joint_position = (1 - gripper_value) / ratio
+
+        # print gripper value and joint position
+        print(
+            f"{gripper_type} gripper value: {gripper_value}, gripper cmd: {gripper_joint_position}"
+        )
+
+        # smaller value -> more closed gripper
         # Set the gripper position
-        self._gripper_set_position(gripper_type, gripper_joint_position)
+        self.start_pos = self._gripper_get_position(gripper_type)
+        print(f"current {gripper_type} gripper position: {self.start_pos}")
+        if self.start_pos > gripper_joint_position:  # open
+            self._gripper_set_position(gripper_type, gripper_joint_position)
+        self._gentle_close_gripper(
+            gripper_type,
+            gentle_closed_position=gripper_joint_position,
+            gentle_close_position_delta=0.02,
+        )
 
     def _operate_gripper(self, gripper_type: str, gripper_value):
         """def set_init_pose(self, init_pose):
@@ -543,7 +556,12 @@ class CogActDemoEnv(DemoEnv):
         )
         print(f"{gripper_type} gripper set to position: {position}")
 
-    def _gentle_close_gripper(self, gripper_type: str):
+    def _gentle_close_gripper(
+        self,
+        gripper_type: str,
+        gentle_closed_position=0.01,
+        gentle_close_position_delta=0.01,
+    ):
         """
         Gently close the gripper to avoid damaging objects.
         """
@@ -554,7 +572,7 @@ class CogActDemoEnv(DemoEnv):
 
         # Set a gentle close position delta, e.g., 0.1
         # This is to avoid damaging objects by closing too hard
-        gentle_close_position_delta = 0.005
+        # gentle_close_position_delta = 0.01
         # Get the current position of the gripper
         cur_obs = self.get_observation()
         current_position = (
@@ -582,10 +600,10 @@ class CogActDemoEnv(DemoEnv):
             # np.arange excludes the endpoint, so we subtract a small epsilon to include min_value
             return np.arange(current_value, min_value - 1e-8, -delta)
 
-        # gentle_closed_postion = 0.1  # Set a gentle close position, e.g., 0.01
-        gentle_closed_position = self.min_gripper_close_pos.get(
-            self.specific_task_name, 0.01
-        )  # Default to 0.01 if not specified for the task
+        # # gentle_closed_postion = 0.1  # Set a gentle close position, e.g., 0.01
+        # gentle_closed_position = self.min_gripper_close_pos.get(
+        #     self.specific_task_name, 0.01
+        # )  # Default to 0.01 if not specified for the task
         if current_position > gentle_closed_position:
             gentle_close_positions = generate_decreasing_range(
                 current_value=current_position,
@@ -602,7 +620,7 @@ class CogActDemoEnv(DemoEnv):
                     is_trajectory=False,
                     joint_indices=[gripper_joint_idx],
                 )
-                time.sleep(0.1)
+                time.sleep(0.05)
                 print(f"{gripper_type} gripper gently closed to {gripper_pos}")
 
     def _get_per_step_actions(self, actions, step_id):
@@ -627,7 +645,7 @@ class CogActDemoEnv(DemoEnv):
         self.current_step += 1
         action_len = len(actions["ROBOT_RIGHT_POSE_IN_HEAD_CAM"])
 
-        execute_K = min(1, action_len)
+        execute_K = min(8, action_len)
         execute_step_N = 1
         for execute_step_id in range(execute_K):
             is_first_or_last = execute_step_id == 0 or execute_step_id == execute_K - 1

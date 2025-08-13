@@ -9,8 +9,8 @@
           -0.03,
           0
         ],
-        "data_info_dir": "objects/iros/beverage_bottle/iros_beverage_bottle_003",
-        "dynamic_friction": 0.2,
+        "data_info_dir": "objects/iros/beverage_bottle/iros_beverage_bottle_002/",
+        "dynamic_friction": 1,
         "interaction": {
           "active": {
             "place": {
@@ -76,10 +76,10 @@
           "diffuse",
           "transparent"
         ],
-        "model_path": "objects/iros/beverage_bottle/iros_beverage_bottle_003/Aligned.usd",
-        "model_type": "convexHull",
-        "obj_path": "objects/iros/beverage_bottle/iros_beverage_bottle_003/Aligned.obj",
-        "object_id": "iros_beverage_bottle_003",
+        "model_path": "objects/iros/beverage_bottle/iros_beverage_bottle_002/Aligned.usd",
+        "model_type": "ConvexHull",
+        "obj_path": "objects/iros/beverage_bottle/iros_beverage_bottle_002/Aligned.obj",
+        "object_id": "iros_beverage_bottle_002",
         "original_model_path": "PAM/object_meshes/omniobject3d-bottle_001",
         "position": [
           -4.4,
@@ -87,17 +87,17 @@
           0.75
         ],
         "quaternion": [
-          0.7071067811865475,
-          0.7071067811865476,
-          0.0,
-          0.0
+          0.5,
+          0.5,
+          0.5,
+          0.5
         ],
         "size": [
           0.6566755676269531,
           0.21573983764648438,
           0.660122299194336
         ],
-        "static_friction": 0.2,
+        "static_friction": 1,
         "upAxis": [
           "y"
         ]

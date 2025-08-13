@@ -6,22 +6,25 @@ import imageio
 from tqdm import tqdm
 
 # -------- CONFIG --------
-# task_name = "iros_make_a_sandwich"
+task_name = "iros_make_a_sandwich"
 # task_name = "iros_clear_table_in_the_restaurant"
-task_name = "iros_restock_supermarket_items"
+# task_name = "iros_restock_supermarket_items"
 # task_name = "iros_stamp_the_seal"
 # task_name = "iros_pack_moving_objects_from_conveyor"
-# task_name = "iros_clear_the_countertop_waste"
-EXP_ID="port_12020"
-BASE_LOG_DIR = (
-    f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}"
-)
-VIDEO_ROOT = BASE_LOG_DIR.replace("action_logs", "replay_logs_video")  # you can also set manually
+task_name = "iros_clear_the_countertop_waste"
+EXP_ID = "port_13020_step1234"
+BASE_LOG_DIR = f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}"
+VIDEO_ROOT = BASE_LOG_DIR.replace(
+    "action_logs", "replay_logs_video"
+)  # you can also set manually
 VIDEO_FILENAME = "stacked_view_video.mp4"
-VIDEO_OUTPUT = f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}/stacked_view_video.mp4"
+VIDEO_OUTPUT = (
+    f"/root/workspace/main/action_logs/{EXP_ID}/{task_name}/stacked_view_video.mp4"
+)
 N = 100  # Use first N files sorted by timestamp
-REMOVE_PKL_AFTER_VIDEO=True
+REMOVE_PKL_AFTER_VIDEO = True
 from datetime import datetime
+
 
 def find_all_iter_dirs(base_dir):
     return sorted(
@@ -30,8 +33,9 @@ def find_all_iter_dirs(base_dir):
             for d in os.listdir(base_dir)
             if os.path.isdir(os.path.join(base_dir, d)) and d.startswith("iter_")
         ],
-        key=lambda d: int(os.path.basename(d).split("_")[1])
+        key=lambda d: int(os.path.basename(d).split("_")[1]),
     )
+
 
 # -------- UTILITY FUNCTIONS --------
 def extract_timestamp(filename):
@@ -81,7 +85,7 @@ def collect_sorted_pkl_files(log_dir, n=None):
     if n is None:
         n = len(pkl_files)
     elif n > len(pkl_files):
-        n = len(pkl_files)    
+        n = len(pkl_files)
     return pkl_files[:n]
 
 

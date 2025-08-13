@@ -17,7 +17,7 @@ from base_utils.logger import Logger
 
 logger = Logger()  # Create singleton instance
 # Optional: create a directory to store the logs
-MODEL_PORT = 13020
+MODEL_PORT = 14030
 log_dir = f"action_logs/port_{MODEL_PORT}"
 os.makedirs(log_dir, exist_ok=True)
 MOCK_DELTA_TRANS_IN_REALCAM_COORD = False
@@ -834,7 +834,9 @@ class CogActPolicy(BasePolicy):
             observations
         )
         for i in range(len(ee_left_translation)):
-            ee_left_translation_s += ee_left_translation[i]
+            ee_left_translation_s += ee_left_translation[
+                i
+            ]  # handling translation delta here
             ee_left_translation[i] = ee_left_translation_s.copy()
         return ee_left_translation
 
